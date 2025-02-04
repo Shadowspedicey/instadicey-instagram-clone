@@ -1,0 +1,217 @@
+*,
+*::before,
+*::after
+{
+	box-sizing: border-box;
+	font-family: "Montserrat";
+	padding: 0;
+	margin: 0;
+}
+
+.outlined
+{
+	border: 1px solid rgba(0, 0, 0, 0.125) !important;
+}
+.outlinedhalf
+{
+	border: 1.5px solid rgba(0, 0, 0, 0.125);
+}
+.round
+{
+	border-radius: 25px;
+}
+.disabled
+{
+	cursor: unset !important;
+	pointer-events: none;
+	opacity: 0.5;
+}
+
+html, body
+{
+	height: 100%;
+	font-family: "Montserrat";
+}
+
+#root
+{
+	height: 100%;
+}
+
+a
+{
+	color: inherit;
+	text-decoration: none;
+}
+
+li
+{
+	list-style: none;
+}
+
+img
+{
+	height: 100%;
+}
+
+button
+{
+	width: 100%;
+	background-color: #ce0000;
+
+	cursor: pointer;
+	color: white;
+	
+	padding: 0.25rem 0.5rem;
+	border: none;
+	border-radius: 5px;
+}
+button:active
+{
+	background-color: hsl(0, 77%, 60%);
+}
+
+button.icon
+{
+	width: initial;
+	background: initial;
+	color: initial;
+	padding: 0;
+	border-radius: initial;
+}
+button.icon:active
+{
+	color: initial;
+}
+
+button.text
+{
+	width: initial;
+	background: transparent;
+	color: #db0000;
+	font-weight: bold;
+	font-size: 0.95em;
+	padding: 0;
+}
+button.text:active
+{
+	color: #f07d7d !important;
+}
+
+button.loading
+{
+	height: initial;
+	background-color: hsl(0, 100%, 75%) !important;
+	cursor: initial;
+	pointer-events: none;
+}
+button.loading div
+{
+	height: 100%;
+}
+
+.backdrop.container
+{
+	width: 100%;
+	height: 100%;
+	background-color: rgba(0, 0, 0, 0.75);
+	position: fixed;
+	top: 0;
+	left: 0;
+	z-index: 99999;
+}
+
+span.arrow
+{
+	width: 10px;
+	height: 10px;
+	background-color: white;
+
+	transform: rotate(45deg);
+
+	position: absolute;
+	z-index: 1;
+	
+	border-left: 1px solid rgba(0, 0, 0, 0.125);
+	border-top: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.verified
+{
+	filter: invert(13%) sepia(93%) saturate(5910%) hue-rotate(360deg) brightness(77%) contrast(115%);
+}
+
+.profile-pic
+{
+	min-width: 32px;
+	width: 32px;
+	height: 32px;
+	min-height: 32px;
+	overflow: hidden;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	border-radius: 50%;
+	border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+span.timestamp
+{
+	cursor: default;
+	color: #8e8e8e;
+	font-weight: 500;
+	font-size: 0.75em;
+	margin-top: 0.75rem;
+}
+
+.dialog-box-container
+{
+	width: 100vw;
+	height: 100vh;
+	background-color: rgba(0, 0, 0, 0.5);
+
+	display: flex;
+	justify-content: center;
+	align-items: center;
+
+	position: fixed;
+	top: 0;
+	left: 0;
+	z-index: 99999;
+}
+.dialog-box
+{
+	width: 400px;
+	background-color: white;
+	overflow: hidden;
+	animation: shrinkToNormal 50ms ease-in-out 0s forwards;
+
+	border-radius: 25px;
+}
+.dialog-box h2
+{
+	font-size: 1.125em;
+	text-align: center;
+	font-weight: 500;
+	margin: 2rem 0;
+}
+.dialog-box button
+{
+	width: inherit;
+	color: black;
+	padding: 1rem 0 !important;
+	border-top: 1px solid rgba(0, 0, 0, 0.125);
+}
+.dialog-box button:active
+{
+	color: inherit !important;
+	background-color: rgba(0, 0, 0, 0.075);
+}
+.dialog-box button.remove
+{
+	color: #db0000;
+}
+.dialog-box button.remove:active
+{
+	color: #db0000 !important;
+}

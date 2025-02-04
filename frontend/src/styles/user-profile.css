@@ -1,0 +1,298 @@
+.user-profile
+{
+	height: 100%;
+	max-width: 1050px;
+	width: 100%;
+	margin-top: 50px;
+	padding: 0 1.5rem;
+}
+
+.follow-list-window
+{
+	width: 425px;
+	height: 400px;
+	background-color: white;
+	overflow: hidden;
+
+	animation: shrinkToNormal 0.05s ease-in-out 0s forwards;
+
+	display: flex;
+	flex-direction: column;
+
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	z-index: 999999;
+
+	margin-left: -200px;
+	margin-top: -200px;
+	border-radius: 10px;
+}
+
+.follow-list-window h1
+{
+	text-align: center;
+	font-size: 1.25em;
+	font-weight: 500;
+	padding: 0.75rem 0;
+	border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.follow-list-window ul
+{
+	overflow-x: hidden;
+	overflow-y: auto;
+	padding: 0 1rem;
+}
+
+.follow-list-window .header
+{
+	position: relative;
+}
+.follow-list-window .header .close
+{
+	font-size: 1.5em;
+	font-weight: 500;
+	cursor: pointer;
+	transform: translateY(-50%);
+	position: absolute;
+	right: 1rem;
+	top: 50%;
+}
+.follow-list-window .person
+{
+	display: flex;
+	justify-content: space-between;
+	
+	padding: 0.5rem 0;
+}
+
+.follow-list-window .person .profile
+{
+	display: flex;
+}
+
+.follow-list-window .person .profile-pic
+{
+	width: 35px;
+	height: 35px;
+	margin-right: 1rem;
+}
+
+.follow-list-window .person .info
+{
+	display: flex;
+	flex-direction: column;
+	font-weight: 500;
+}
+.follow-list-window .person .info .real-name
+{
+	font-weight: 400;
+	color: #8e8e8e;
+}
+.follow-list-window .person .info .verified
+{
+	width: 16px;
+	height: 16px;
+	margin-left: 8px;
+}
+
+.follow-list-window ul.loading
+{
+	overflow: hidden;
+	animation: opacityPulse 1s ease-in-out 0s infinite;
+}
+.follow-list-window ul.loading .pic
+{
+	background-color: hsl(0, 0%, 80%);
+}
+.follow-list-window ul.loading .real-name
+{
+	width: 150px;
+	height: 15px;
+	background-color: hsl(0, 0%, 80%);
+	margin-bottom: 0.25rem;
+	border-radius: 25px;
+}
+.follow-list-window ul.loading .username
+{
+	width: 50px;
+	height: 15px;
+	background-color: hsl(0, 0%, 80%);
+	border-radius: 25px;
+}
+
+.user-profile .upper
+{
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	margin-bottom: 3rem;
+}
+
+.user-profile .upper .personal-info
+{
+	width: 100%;
+	max-width: 750px;
+	display: flex;
+	justify-content: space-between;
+	margin-right: 100px;
+	padding: 0 1rem;
+}
+
+.user-profile .upper .personal-info .profile-pic
+{
+	min-width: max-content;
+	width: 175px;
+	height: 175px;
+	align-self: center;
+	border-radius: 50%;
+	border: 1px solid rgba(206, 206, 206, 0.25);
+}
+
+.user-profile .upper .personal-info .info
+{
+	position: relative;
+	top: 15px;
+}
+
+.user-profile .upper .personal-info .info > div
+{
+	margin-bottom: 1rem;
+}
+
+/* posts, followers and following text */
+.user-profile .upper .personal-info .follow > span
+{
+	margin-right: 2rem;
+}
+.user-profile .upper .personal-info .follow .followers,
+.user-profile .upper .personal-info .follow .following
+{
+	cursor: pointer;
+}
+.user-profile .upper .personal-info .follow .followers:active,
+.user-profile .upper .personal-info .follow .following:active
+{
+	color: rgba(0, 0, 0, 0.5);
+}
+.user-profile .upper .personal-info .follow > span .number
+{
+	font-weight: bold;
+}
+
+.user-profile .upper .personal-info .info .name
+{
+	font-size: 1.5em;
+	font-weight: 300;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+}
+
+.user-profile .upper .personal-info .info .name .verified
+{
+	margin: auto 0;
+	margin-left: 10px;
+}
+
+.follow-btn
+{
+	width: 95px;
+	height: 33px !important;
+	background-color: #db0000;
+	cursor: pointer;
+
+	color: white;
+	font-weight: bold;
+
+	padding: 0.5rem 0.75rem;
+	margin-left: 1rem;
+	border: none;
+	border-radius: 4px;
+}
+
+a.edit-profile-btn
+{
+	color: black;
+	background-color: #FAFAFA !important;
+
+	cursor: pointer;
+	font-size: 0.65em;
+	font-weight: 500;
+	
+	padding: 0.25rem 0.5rem;
+	margin-left: 1rem;
+	border-radius: 5px;
+}
+
+.user-profile .upper .personal-info .bio
+{
+	max-width: 330px;
+	width: 100%;
+	word-break: break-all;
+}
+
+.user-profile .upper .personal-info .bio .real-name
+{
+	font-weight: bold;
+}
+.user-profile .upper .personal-info .bio .bio-text
+{
+	max-width: 330px;
+	white-space: pre-line;
+	margin-top: 0.75rem;
+}
+
+.user-profile nav
+{
+	border-top: 1px solid rgba(0, 0, 0, 0.125);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+.user-profile nav ul
+{
+	display: flex;
+}
+.user-profile nav li
+{
+	padding: 1rem 0;
+	margin: 0 1rem;
+}
+.user-profile nav li a
+{
+	opacity: 0.5;
+	font-weight: 500;
+	padding: 1rem 0;
+}
+.user-profile nav li a.selected
+{
+	opacity: 1;
+	border-top: 1px solid black;
+}
+.user-profile nav li a:active
+{
+	opacity: 0.25;
+}
+.user-profile nav li .icon
+{
+	width: 14px;
+	height: 14px;
+}
+
+@keyframes opacityPulse
+{
+	0%
+	{
+		opacity: 1;
+	}
+	50%
+	{
+		opacity: 0.75;
+	}
+	100%
+	{
+		opacity: 1;
+	}
+}
