@@ -13,7 +13,7 @@ namespace InstagramClone.Data.Entities
 		[StringLength(50)]
 		public required string RealName { get; set; }
 		[Url]
-		public required string ProfilePic { get; set; }
+		public string? ProfilePic { get; set; }
 		public required bool IsVerified { get; set; }
 		public virtual required ICollection<User> RecentSearches { get; set; } = [];
 		public required DateTime CreatedAt { get; set; }
