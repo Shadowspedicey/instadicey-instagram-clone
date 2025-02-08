@@ -1,7 +1,8 @@
 using InstagramClone.Data;
+using InstagramClone.Data.Entities;
+using InstagramClone.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +30,18 @@ builder.Services.AddAuthentication("Bearer")
 		options.TokenValidationParameters = jwtValidationParameters;
 	});
 builder.Services.AddAuthorization();
+builder.Services.AddIdentityCore<User>(options =>
+{
+	options.Password.RequireNonAlphanumeric = false;
+	options.Password.RequiredLength = 6;
+	options.Password.RequireDigit = false;
+	options.Password.RequiredUniqueChars = 0;
+	options.Password.RequireUppercase = false;
+
+	options.User.RequireUniqueEmail = true;
+})
+	.AddEntityFrameworkStores<AppDbContext>();
+builder.Services.AddScoped<AuthService>();
 
 var app = builder.Build();
 
@@ -40,6 +53,5 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-app.MapGet("", () => "Hey").RequireAuthorization();
 
 app.Run();
