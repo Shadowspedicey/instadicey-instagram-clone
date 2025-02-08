@@ -11,3 +11,10 @@ This does not accurately represent the technical side of the database fully, but
 ![ERD](ERD.png "The ERD")
 
 This ERD was made using [ERDPlus](https://erdplus.com/).
+
+# Features
+✅ SQL Server - Data storage
+
+✅ JWT tokens - Generates and validates JWTs to use for authentication
+
+✅ ASP.NET Identity - Account management (authorization, authentication)
