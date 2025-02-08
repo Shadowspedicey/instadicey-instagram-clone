@@ -1,15 +1,10 @@
-﻿using InstagramClone.Data.Annotations;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace InstagramClone.Data.Entities
 {
 	public class User : IdentityUser
 	{
-		[StringLength(20, MinimumLength = 1)]
-		[EnglishOnly]
-		public required string Username { get; set; }
 		[StringLength(50)]
 		public required string RealName { get; set; }
 		[Url]

@@ -171,10 +171,6 @@ namespace InstagramClone.Data.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("UserName")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<string>("Username")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
@@ -379,13 +375,13 @@ namespace InstagramClone.Data.Migrations
                     b.HasOne("InstagramClone.Data.Entities.Post", "Post")
                         .WithMany("Comments")
                         .HasForeignKey("PostID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.ClientCascade)
                         .IsRequired();
 
                     b.HasOne("InstagramClone.Data.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.ClientCascade)
                         .IsRequired();
 
                     b.Navigation("Post");
@@ -460,7 +456,7 @@ namespace InstagramClone.Data.Migrations
                     b.HasOne("InstagramClone.Data.Entities.Post", null)
                         .WithMany()
                         .HasForeignKey("LikedPostsID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.ClientCascade)
                         .IsRequired();
 
                     b.HasOne("InstagramClone.Data.Entities.User", null)
@@ -475,7 +471,7 @@ namespace InstagramClone.Data.Migrations
                     b.HasOne("InstagramClone.Data.Entities.Post", null)
                         .WithMany()
                         .HasForeignKey("SavedPostsID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.ClientCascade)
                         .IsRequired();
 
                     b.HasOne("InstagramClone.Data.Entities.User", null)

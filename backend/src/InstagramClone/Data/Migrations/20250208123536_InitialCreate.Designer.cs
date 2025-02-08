@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InstagramClone.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250205160812_InitialCreate")]
+    [Migration("20250208123536_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -158,7 +158,6 @@ namespace InstagramClone.Data.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("ProfilePic")
-                        .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("nvarchar(max)")
                         .HasDefaultValue("https://firebasestorage.googleapis.com/v0/b/instadicey.appspot.com/o/default%2FprofilePic.jpg?alt=media&token=3ac835a3-016e-470a-b7b3-f898d82cdbde");
@@ -175,10 +174,6 @@ namespace InstagramClone.Data.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("UserName")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<string>("Username")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
@@ -383,13 +378,13 @@ namespace InstagramClone.Data.Migrations
                     b.HasOne("InstagramClone.Data.Entities.Post", "Post")
                         .WithMany("Comments")
                         .HasForeignKey("PostID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.ClientCascade)
                         .IsRequired();
 
                     b.HasOne("InstagramClone.Data.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.ClientCascade)
                         .IsRequired();
 
                     b.Navigation("Post");
@@ -464,7 +459,7 @@ namespace InstagramClone.Data.Migrations
                     b.HasOne("InstagramClone.Data.Entities.Post", null)
                         .WithMany()
                         .HasForeignKey("LikedPostsID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.ClientCascade)
                         .IsRequired();
 
                     b.HasOne("InstagramClone.Data.Entities.User", null)
@@ -479,7 +474,7 @@ namespace InstagramClone.Data.Migrations
                     b.HasOne("InstagramClone.Data.Entities.Post", null)
                         .WithMany()
                         .HasForeignKey("SavedPostsID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.ClientCascade)
                         .IsRequired();
 
                     b.HasOne("InstagramClone.Data.Entities.User", null)
