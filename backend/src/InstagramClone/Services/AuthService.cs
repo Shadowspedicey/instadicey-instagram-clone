@@ -41,6 +41,23 @@ namespace InstagramClone.Services
 			return (result, newUser);
 		}
 
+		public async Task<(IdentityResult, User?)> CheckLoginInfo(string email, string password)
+		{
+			User? user = await _userManager.FindByEmailAsync(email);
+			if (user == null)
+				return (IdentityResult.Failed(new IdentityError() { Code = "InvalidCredentials", Description = "Invalid credentials." }), null);
+
+			bool loginResult = await _userManager.CheckPasswordAsync(user, password);
+			if (!loginResult)
+				return (IdentityResult.Failed(new IdentityError() { Code = "InvalidCredentials", Description = "Invalid credentials." }), null);
+
+			bool emailConfirmationCheckResult = await _userManager.IsEmailConfirmedAsync(user);
+			if (!emailConfirmationCheckResult)
+				return (IdentityResult.Failed(new IdentityError() { Code = "EmailNotVerified", Description = "Email address is not verified." }), null);
+
+			return (IdentityResult.Success, user);
+		}
+
 		public async Task<IdentityResult> ConfirmEmail(ClaimsPrincipal userPrincipal, string code)
 		{
 			User? user = await _userManager.GetUserAsync(userPrincipal);
