@@ -40,7 +40,7 @@ namespace InstagramClone.Tests
 			public async Task GenerateToken_ReturnsValidToken()
 			{
 				AuthService authService = new AuthService(_configuration);
-				string token = authService.GenereateToken();
+				string token = authService.GenerateToken();
 
 				bool tokenIsValid = await ValidateToken(token);
 

@@ -51,7 +51,7 @@ namespace InstagramClone.Services
 			return result;
 		}
 
-		public string GenereateToken(User? user = null)
+		public string GenerateToken(User? user = null)
 		{
 			var securityKey = new SymmetricSecurityKey(Convert.FromBase64String(_configuration["Authentication:Schemes:Bearer:SigningKeys:1:Value"]));
 			var signingCredentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
