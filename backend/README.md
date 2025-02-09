@@ -18,3 +18,5 @@ This ERD was made using [ERDPlus](https://erdplus.com/).
 ✅ JWT tokens - Generates and validates JWTs to use for authentication
 
 ✅ ASP.NET Identity - Account management (authorization, authentication)
+
+✅ Email verification - Used SendGrid with Identity to send verification emails (for sign up)

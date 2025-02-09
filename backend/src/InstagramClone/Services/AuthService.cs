@@ -1,18 +1,22 @@
 ﻿using InstagramClone.Data.Entities;
 using InstagramClone.DTOs.Authentication;
+using InstagramClone.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
-using System.Reflection.Metadata.Ecma335;
 using System.Security.Claims;
 
 namespace InstagramClone.Services
 {
-	public class AuthService(IConfiguration configuration, UserManager<User>? userManager = null)
+	public class AuthService(
+		IConfiguration configuration,
+		UserManager<User>? userManager = null,
+		IEmailSender? emailSender = null)
 	{
 		private readonly IConfiguration _configuration = configuration;
 		private readonly UserManager<User> _userManager = userManager;
+		private readonly IEmailSender _emailSender = emailSender;
 
 		public async Task<(IdentityResult, User?)> RegisterUser(UserRegisterDTO userData)
 		{
@@ -35,7 +39,7 @@ namespace InstagramClone.Services
 			var token = await _userManager.GenerateEmailConfirmationTokenAsync(newUser);
 			var encodedToken = WebUtility.UrlEncode(token);
 
-			// TODO: Set up email sending
+			await _emailSender.SendAccountVerificationEmail(newUser, encodedToken);
 			Console.WriteLine(encodedToken);
 
 			return (result, newUser);
@@ -58,13 +62,15 @@ namespace InstagramClone.Services
 			return (IdentityResult.Success, user);
 		}
 
-		public async Task<IdentityResult> ConfirmEmail(ClaimsPrincipal userPrincipal, string code)
+		public async Task<IdentityResult> ConfirmEmail(string encodedEmail, string encodedToken)
 		{
-			User? user = await _userManager.GetUserAsync(userPrincipal);
+			string email = WebUtility.UrlDecode(encodedEmail);
+
+			User? user = await _userManager.FindByEmailAsync(email);
 			if (user is null)
 				return IdentityResult.Failed(new IdentityError() { Code = "UserNotFound" });
 
-			var result = await _userManager.ConfirmEmailAsync(user, code);
+			var result = await _userManager.ConfirmEmailAsync(user, encodedToken);
 			return result;
 		}
 

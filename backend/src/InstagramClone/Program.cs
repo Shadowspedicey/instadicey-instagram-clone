@@ -1,5 +1,6 @@
 using InstagramClone.Data;
 using InstagramClone.Data.Entities;
+using InstagramClone.Interfaces;
 using InstagramClone.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -50,6 +51,7 @@ builder.Services.AddIdentityCore<User>(options =>
 	.AddEntityFrameworkStores<AppDbContext>()
 	.AddDefaultTokenProviders();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddTransient<IEmailSender, EmailSender>();
 
 var app = builder.Build();
 
