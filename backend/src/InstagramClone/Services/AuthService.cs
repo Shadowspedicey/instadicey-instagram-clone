@@ -36,11 +36,8 @@ namespace InstagramClone.Services
 			var result = await _userManager.CreateAsync(newUser, userData.Password);
 			if (!result.Succeeded)
 				return (result, null);
-			var token = await _userManager.GenerateEmailConfirmationTokenAsync(newUser);
-			var encodedToken = WebUtility.UrlEncode(token);
 
-			await _emailSender.SendAccountVerificationEmail(newUser, encodedToken);
-			Console.WriteLine(encodedToken);
+			await SendAccountVerificationEmail(user: newUser);
 
 			return (result, newUser);
 		}
@@ -60,6 +57,23 @@ namespace InstagramClone.Services
 				return (IdentityResult.Failed(new IdentityError() { Code = "EmailNotVerified", Description = "Email address is not verified." }), null);
 
 			return (IdentityResult.Success, user);
+		}
+
+		public async Task<IdentityResult> SendAccountVerificationEmail(User? user = null, string? email = null)
+		{
+			if (user is null & string.IsNullOrEmpty(email))
+				return IdentityResult.Failed(new IdentityError() { Code = "InvalidEmail" });
+
+			if (user is null && email is not null)
+				user = await _userManager.FindByEmailAsync(email);
+			if (user is null)
+				return IdentityResult.Failed(new IdentityError() { Code = "InvalidEmail" });
+
+			var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+			var encodedToken = WebUtility.UrlEncode(token);
+
+			await _emailSender.SendAccountVerificationEmail(user, encodedToken);
+			return IdentityResult.Success;
 		}
 
 		public async Task<IdentityResult> ConfirmEmail(string encodedEmail, string encodedToken)
