@@ -1,6 +1,7 @@
 using InstagramClone.Data;
 using InstagramClone.Data.Entities;
 using InstagramClone.Services;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -32,6 +33,10 @@ builder.Services.AddAuthentication("Bearer")
 builder.Services.AddAuthorization();
 builder.Services.AddIdentityCore<User>(options =>
 {
+	options.ClaimsIdentity.UserIdClaimType = "sub";
+	options.ClaimsIdentity.UserNameClaimType = "username";
+	options.ClaimsIdentity.EmailClaimType = "email";
+
 	options.Password.RequireNonAlphanumeric = false;
 	options.Password.RequiredLength = 6;
 	options.Password.RequireDigit = false;
@@ -39,8 +44,11 @@ builder.Services.AddIdentityCore<User>(options =>
 	options.Password.RequireUppercase = false;
 
 	options.User.RequireUniqueEmail = true;
+
+	options.SignIn.RequireConfirmedEmail = true;
 })
-	.AddEntityFrameworkStores<AppDbContext>();
+	.AddEntityFrameworkStores<AppDbContext>()
+	.AddDefaultTokenProviders();
 builder.Services.AddScoped<AuthService>();
 
 var app = builder.Build();
