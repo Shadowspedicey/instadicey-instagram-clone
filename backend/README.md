@@ -22,3 +22,5 @@ This ERD was made using [ERDPlus](https://erdplus.com/).
 ✅ Email verification - Used SendGrid with Identity to send verification emails (for sign up)
 
 ✅ Problem Details - Error responses follow problem details RFC 7807 specifications
+
+✅ Testing - Used xUnit for unit tests, and Sqlite (in-memory) for integration tests
