@@ -18,7 +18,7 @@ namespace InstagramClone.Services
 		private readonly UserManager<User> _userManager = userManager;
 		private readonly IEmailSender _emailSender = emailSender;
 
-		public async Task<(IdentityResult, User?)> RegisterUser(UserRegisterDTO userData)
+		public async Task<IdentityResult> RegisterUser(UserRegisterDTO userData)
 		{
 			User newUser = new()
 			{
@@ -35,22 +35,25 @@ namespace InstagramClone.Services
 
 			var result = await _userManager.CreateAsync(newUser, userData.Password);
 			if (!result.Succeeded)
-				return (result, null);
+				return result;
 
 			await SendAccountVerificationEmail(user: newUser);
 
-			return (result, newUser);
+			return result;
 		}
 
-		public async Task<(IdentityResult, User?)> CheckLoginInfo(string email, string password)
+		public async Task<(IdentityResult, User?)> CheckLoginInfo(UserLoginDTO userLoginData)
 		{
+			string email = userLoginData.Email;
+			string password = userLoginData.Password;
+
 			User? user = await _userManager.FindByEmailAsync(email);
 			if (user == null)
-				return (IdentityResult.Failed(new IdentityError() { Code = "InvalidCredentials", Description = "Invalid credentials." }), null);
+				return (IdentityResult.Failed(new IdentityError() { Code = "InvalidCredentials", Description = "Email or password are invalid." }), null);
 
 			bool loginResult = await _userManager.CheckPasswordAsync(user, password);
 			if (!loginResult)
-				return (IdentityResult.Failed(new IdentityError() { Code = "InvalidCredentials", Description = "Invalid credentials." }), null);
+				return (IdentityResult.Failed(new IdentityError() { Code = "InvalidCredentials", Description = "Email or password are invalid." }), null);
 
 			bool emailConfirmationCheckResult = await _userManager.IsEmailConfirmedAsync(user);
 			if (!emailConfirmationCheckResult)
@@ -59,15 +62,15 @@ namespace InstagramClone.Services
 			return (IdentityResult.Success, user);
 		}
 
-		public async Task<IdentityResult> SendAccountVerificationEmail(User? user = null, string? email = null)
+		public async Task<IdentityResult> SendAccountVerificationEmail(User? user = null, string? encodedEmail = null)
 		{
-			if (user is null & string.IsNullOrEmpty(email))
+			if (user is null & string.IsNullOrEmpty(encodedEmail))
 				return IdentityResult.Failed(new IdentityError() { Code = "InvalidEmail" });
 
-			if (user is null && email is not null)
-				user = await _userManager.FindByEmailAsync(email);
+			if (user is null && encodedEmail is not null)
+				user = await _userManager.FindByEmailAsync(WebUtility.UrlDecode(encodedEmail));
 			if (user is null)
-				return IdentityResult.Failed(new IdentityError() { Code = "InvalidEmail" });
+				return IdentityResult.Failed(new IdentityError() { Code = "UserNotFound" });
 
 			var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
 			var encodedToken = WebUtility.UrlEncode(token);
