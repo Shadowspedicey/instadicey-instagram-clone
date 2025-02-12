@@ -3,7 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 
-namespace InstagramClone.Tests
+namespace InstagramClone.Tests.UnitTests
 {
 	public class AuthServiceTests
 	{
