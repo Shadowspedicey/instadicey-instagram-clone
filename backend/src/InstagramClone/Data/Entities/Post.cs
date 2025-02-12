@@ -9,7 +9,7 @@ namespace InstagramClone.Data.Entities
 		[Key]
 		public required int ID { get; set; }
 		[StringLength(1000)]
-		public required string Caption { get; set; }
+		public string? Caption { get; set; }
 		[Url]
 		public required string Photo { get; set; }
 		public virtual required User User { get; set; }
