@@ -11,7 +11,6 @@ namespace InstagramClone.Data.Entities
 		public string ID { get; set; } = Ulid.NewUlid().ToString();
 		[StringLength(1000)]
 		public string? Caption { get; set; }
-		[Url]
 		public required string Photo { get; set; }
 		public virtual required User User { get; set; }
 		public virtual ICollection<Comment> Comments { get; set; } = [];
