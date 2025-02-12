@@ -6,7 +6,9 @@ namespace InstagramClone.Data.Entities
 	[Table("Comments")]
 	public class Comment
 	{
-		public int ID { get; set; }
+		[Key]
+		[StringLength(26)]
+		public string ID { get; set; } = Ulid.NewUlid().ToString();
 		[StringLength(1000)]
 		public required string Content { get; set; }
 		public virtual required User User { get; set; }

@@ -7,7 +7,8 @@ namespace InstagramClone.Data.Entities
 	public class Post
 	{
 		[Key]
-		public required int ID { get; set; }
+		[StringLength(26)]
+		public string ID { get; set; } = Ulid.NewUlid().ToString();
 		[StringLength(1000)]
 		public string? Caption { get; set; }
 		[Url]
