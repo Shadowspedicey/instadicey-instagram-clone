@@ -1,0 +1,5 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/backend/src/InstagramClone/App_Data/f2fde646-c3c4-49f4-96b1-d984f4790340/posts
