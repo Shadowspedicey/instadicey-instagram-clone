@@ -24,3 +24,5 @@ This ERD was made using [ERDPlus](https://erdplus.com/).
 ✅ Problem Details - Error responses follow problem details RFC 7807 specifications
 
 ✅ Testing - Used xUnit for unit tests, and Sqlite (in-memory) for integration tests
+
+✅ AES Encryption - Encryptes file paths so that the paths are not exposed when being retreived
