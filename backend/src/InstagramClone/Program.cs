@@ -1,7 +1,10 @@
+using InstagramClone.Authorization;
 using InstagramClone.Data;
 using InstagramClone.Data.Entities;
 using InstagramClone.Interfaces;
 using InstagramClone.Services;
+using InstagramClone.Utils;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -32,7 +35,13 @@ builder.Services.AddAuthentication("Bearer")
 		options.MapInboundClaims = false;
 		options.TokenValidationParameters = jwtValidationParameters;
 	});
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+	options.AddPolicy("CanDeletePost", policyBuilder =>
+	{
+		policyBuilder.AddRequirements(new IsPostOwnerRequirement());
+	});
+});
 builder.Services.AddIdentityCore<User>(options =>
 {
 	options.ClaimsIdentity.UserIdClaimType = "sub";
@@ -56,6 +65,9 @@ builder.Services.AddTransient<IEmailSender, EmailSender>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IPostsService, PostsService>();
 builder.Services.AddSingleton<IFileService, FileService>();
+
+// Authorization handlers
+builder.Services.AddSingleton<IAuthorizationHandler, IsPostOwnerHandler>();
 
 var app = builder.Build();
 
