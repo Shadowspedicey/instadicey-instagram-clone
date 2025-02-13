@@ -24,27 +24,17 @@ namespace InstagramClone.Services
 			return Path.Combine(path, fileName);
 		}
 
-		public async Task<Result<(MemoryStream, string)>> GetFile(string encryptedFilePath)
+		public async Task<Result<MemoryStream>> GetFile(string filePath)
 		{
-			string decryptedFilePath;
-			try
-			{
-				decryptedFilePath = Helpers.Encryption.Decrypt(encryptedFilePath);
-			}
-			catch (ArgumentException)
-			{
-				return Result.Fail("Invalid input.");
-			}
-
-			var decryptedFilePathParts = decryptedFilePath.Split(['\\', '/']);
-			string path = Path.GetFullPath($"{_configuration["AppDataFolderName"]}\\{string.Join("\\", decryptedFilePathParts)}");
+			var filePathParts = filePath.Split(['\\', '/']);
+			string path = Path.GetFullPath($"{_configuration["AppDataFolderName"]}\\{string.Join("\\", filePathParts)}");
 
 			if (!File.Exists(path))
 				return Result.Fail("NotFound");
 
-			string fileName = decryptedFilePathParts.Last();
+			string fileName = filePathParts.Last();
 			var memoryStream = new MemoryStream(await File.ReadAllBytesAsync(path));
-			return Result.Ok((memoryStream, fileName));
+			return Result.Ok(memoryStream);
 		}
 
 		public void DeleteFile(string path)
