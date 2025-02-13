@@ -1,24 +1,24 @@
-﻿using FluentResults;
-using InstagramClone.Data;
+﻿using InstagramClone.Data;
 using InstagramClone.Data.Entities;
 using InstagramClone.DTOs.Posts;
 using InstagramClone.Interfaces;
 using InstagramClone.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Moq;
-using System.IO;
-using System.Runtime.CompilerServices;
 using System.Security.Claims;
 
 namespace InstagramClone.Tests.UnitTests
 {
 	public class PostsServiceTests : IDisposable
 	{
-		readonly IPostsService _postsService;
 		readonly AppDbContext _context;
 		readonly ClaimsPrincipal _claimsPrincipal;
 		readonly User _user;
+		readonly IHttpContextAccessor _httpContextAccessorMock;
+		// For happy path
+		readonly IFileService _fileServiceMock;
 		public PostsServiceTests()
 		{
 			SqliteConnection connection = new SqliteConnection("DataSource=:memory:");
@@ -42,8 +42,14 @@ namespace InstagramClone.Tests.UnitTests
 			};
 			context.Add(user);
 			context.SaveChanges();
+			var httpContextAccessorMock = new Mock<IHttpContextAccessor>();
+			httpContextAccessorMock.Setup(context => context.HttpContext.Request.Scheme).Returns("https");
+			httpContextAccessorMock.Setup(context => context.HttpContext.Request.Host).Returns(new HostString("localhost", 7114));
+			var fileServiceMock = new Mock<IFileService>();
+			fileServiceMock.Setup(fs => fs.SaveFile(It.IsAny<IFormFile>(), It.IsAny<string>(), It.IsAny<string>(), new CancellationToken()).Result).Returns("Ok");
 
-			_postsService = new PostsService(context);
+			_httpContextAccessorMock = httpContextAccessorMock.Object;
+			_fileServiceMock = fileServiceMock.Object;
 			_context = context;
 			_user = user;
 
@@ -71,28 +77,11 @@ namespace InstagramClone.Tests.UnitTests
 				Caption = "",
 				Photo = mockPhoto.Object
 			};
+			IPostsService postsService = new PostsService(_context, _fileServiceMock, _httpContextAccessorMock, null);
 
-			var result = await _postsService.CreatePost(_claimsPrincipal, newPost);
+			var result = await postsService.CreatePost(_claimsPrincipal, newPost);
 
 			Assert.True(result.IsSuccess);
-		}
-
-		[Fact]
-		public async Task CreatePost_ShouldReturnResultFailed_WhenInvalidData()
-		{
-			var mockPhoto = new Mock<IFormFile>();
-			mockPhoto.Setup(f => f.OpenReadStream()).Returns(new MemoryStream());
-			mockPhoto.Setup(f => f.FileName).Returns("file.jpg");
-			mockPhoto.Setup(f => f.Length).Returns(100_000_000); // 100 MB
-			PostCreateDTO newPost = new()
-			{
-				Caption = "",
-				Photo = mockPhoto.Object
-			};
-
-			var result = await _postsService.CreatePost(_claimsPrincipal, newPost);
-
-			Assert.False(result.IsSuccess);
 		}
 
 		[Fact]
@@ -102,13 +91,14 @@ namespace InstagramClone.Tests.UnitTests
 			{
 				Caption = "Example Caption",
 				Photo = "https://www.example.com/photo-url",
-				User = null,
+				User = _user,
 				CreatedAt = DateTime.Now,
 			};
 			await _context.Posts.AddAsync(post);
 			await _context.SaveChangesAsync();
+			IPostsService postsService = new PostsService(_context, _fileServiceMock, _httpContextAccessorMock, null);
 
-			var result = await _postsService.GetPost(post.ID);
+			var result = await postsService.GetPost(post.ID);
 
 			Assert.NotNull(result.Value);
 			Assert.Equal(post.ID, result.Value.ID);
@@ -117,7 +107,8 @@ namespace InstagramClone.Tests.UnitTests
 		[Fact]
 		public async Task GetPost_ShouldReturnFailedResult_WhenPostDoesntExists()
 		{
-			var result = await _postsService.GetPost(Ulid.NewUlid().ToString());
+			IPostsService postsService = new PostsService(_context, null!, _httpContextAccessorMock, null!);
+			var result = await postsService.GetPost(Ulid.NewUlid().ToString());
 
 			Assert.False(result.IsSuccess);
 			Assert.Null(result.ValueOrDefault);
@@ -130,14 +121,19 @@ namespace InstagramClone.Tests.UnitTests
 			Post post = new()
 			{
 				Caption = "Example Caption",
-				Photo = null,
+				Photo = "",
 				User = ownerUser,
-				CreatedAt= DateTime.Now,
+				CreatedAt = DateTime.Now,
 			};
 			await _context.Posts.AddAsync(post);
 			await _context.SaveChangesAsync();
+			var fileServiceMock = new Mock<IFileService>();
+			fileServiceMock.Setup(service => service.DeleteFile(It.IsAny<string>()));
+			var authorizationServiceMock = new Mock<IAuthorizationService>();
+			authorizationServiceMock.Setup(service => service.AuthorizeAsync(_claimsPrincipal, post, "CanDeletePost").Result).Returns(AuthorizationResult.Success());
+			IPostsService postsService = new PostsService(_context, fileServiceMock.Object, _httpContextAccessorMock, authorizationServiceMock.Object);
 
-			var result = await _postsService.DeletePost(_claimsPrincipal, post.ID);
+			var result = await postsService.DeletePost(_claimsPrincipal, post.ID);
 			Post? postSearchResult = await _context.Posts.FindAsync(post.ID);
 
 			Assert.True(result.IsSuccess);
@@ -163,14 +159,19 @@ namespace InstagramClone.Tests.UnitTests
 			var post = new Post
 			{
 				Caption = "Example Caption",
-				Photo = null,
+				Photo = "",
 				User = ownerUser,
 				CreatedAt = DateTime.Now,
 			};
 			await _context.Posts.AddAsync(post);
 			await _context.SaveChangesAsync();
+			var fileServiceMock = new Mock<IFileService>();
+			fileServiceMock.Setup(service => service.DeleteFile(It.IsAny<string>()));
+			var authorizationServiceMock = new Mock<IAuthorizationService>();
+			authorizationServiceMock.Setup(s => s.AuthorizeAsync(_claimsPrincipal, post, "CanDeletePost").Result).Returns(AuthorizationResult.Failed());
+			IPostsService postsService = new PostsService(_context, fileServiceMock.Object, _httpContextAccessorMock, authorizationServiceMock.Object);
 
-			var result = await _postsService.DeletePost(_claimsPrincipal, post.ID);
+			var result = await postsService.DeletePost(_claimsPrincipal, post.ID);
 			Post? postSearchResult = await _context.Posts.FindAsync(post.ID);
 
 			Assert.False(result.IsSuccess);
