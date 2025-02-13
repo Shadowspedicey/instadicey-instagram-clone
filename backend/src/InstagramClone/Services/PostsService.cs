@@ -6,13 +6,19 @@ using InstagramClone.Interfaces;
 using System.Security.Claims;
 using InstagramClone.Utils;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 
 namespace InstagramClone.Services
 {
-	public class PostsService(AppDbContext dbContext, IFileService fileService, IHttpContextAccessor httpContextAccessor) : IPostsService
+	public class PostsService(
+		AppDbContext dbContext,
+		IFileService fileService,
+		IHttpContextAccessor httpContextAccessor,
+		IAuthorizationService authorizationService) : IPostsService
 	{
 		private readonly AppDbContext _dbContext = dbContext;
 		private readonly IFileService _fileService = fileService;
+		private readonly IAuthorizationService _authorizationService = authorizationService;
 		private readonly string downloadFileEndpoint = $"{httpContextAccessor.HttpContext?.Request.Scheme}://{httpContextAccessor.HttpContext?.Request.Host}/file/";
 
 		public async Task<Result<PostGetDTO>> CreatePost(ClaimsPrincipal user, PostCreateDTO postDTO)
@@ -43,9 +49,20 @@ namespace InstagramClone.Services
 			}
 		}
 
-		public Task<Result> DeletePost(ClaimsPrincipal user, string postID)
+		public async Task<Result> DeletePost(ClaimsPrincipal user, string postID)
 		{
-			throw new NotImplementedException();
+			Post? post = await _dbContext.Posts.Include(p => p.User).FirstOrDefaultAsync(p => p.ID == postID);
+			if (post is null)
+				return Result.Fail(new CodedError(ErrorCode.NotFound, "Post was not found."));
+
+			var authorizationResult = await _authorizationService.AuthorizeAsync(user, post, "CanDeletePost");
+			if (!authorizationResult.Succeeded)
+				return Result.Fail(new CodedError(ErrorCode.InsufficientPermissions, "User doesn't have the permission to delete the post"));
+
+			_dbContext.Posts.Remove(post);
+			await _dbContext.SaveChangesAsync();
+			_fileService.DeleteFile(Helpers.Encryption.Decrypt(post.Photo));
+			return Result.Ok();
 		}
 
 		public async Task<Result<PostGetDTO>> GetPost(string postID)

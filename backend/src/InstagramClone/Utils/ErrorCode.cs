@@ -2,6 +2,6 @@
 {
 	public enum ErrorCode
 	{
-		NotFound, InvalidInput
+		NotFound, InvalidInput, InsufficientPermissions
 	}
 }

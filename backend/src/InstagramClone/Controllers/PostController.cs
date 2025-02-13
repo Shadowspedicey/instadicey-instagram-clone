@@ -34,5 +34,21 @@ namespace InstagramClone.Controllers
 			else
 				return this.ProblemWithErrors(statusCode: 400, errors: result.Errors.Select(e => e.Metadata));
 		}
+
+		[Authorize]
+		[HttpPost("delete/{postID}")]
+		public async Task<IActionResult> DeletePost(string postID)
+		{
+			var result = await _postsService.DeletePost(User, postID);
+
+			if (result.IsSuccess)
+				return NoContent();
+			else if (result.HasCodedErrorWithCode(ErrorCode.InsufficientPermissions))
+				return Problem(statusCode: 403, detail: result.Errors[0].Message);
+			else if (result.HasCodedErrorWithCode(ErrorCode.NotFound))
+				return Problem(statusCode: 404, detail: result.Errors[0].Message);
+			else
+				return this.ProblemWithErrors(statusCode: 400, detail: result.Errors[0].Message, errors: result.Errors.Select(e => e.Metadata));
+		}
 	}
 }
