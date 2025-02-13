@@ -53,6 +53,8 @@ builder.Services.AddIdentityCore<User>(options =>
 	.AddDefaultTokenProviders();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddTransient<IEmailSender, EmailSender>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IPostsService, PostsService>();
 builder.Services.AddSingleton<IFileService, FileService>();
 
 var app = builder.Build();
