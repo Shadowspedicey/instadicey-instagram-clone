@@ -20,15 +20,15 @@ namespace InstagramClone.Controllers
 			}
 			catch (ArgumentException)
 			{
-				return BadRequest();
+				return Problem(statusCode: 400, detail: "The format of the file request is invalid.");
 			}
 
 			var result = await _fileService.GetFile(decryptedFilePath);
 			if (!result.IsSuccess)
-				if (result.HasError(e => e.Message == "NotFound"))
+				if (result.HasCodedErrorWithCode(ErrorCode.NotFound))
 					return NotFound();
 				else
-					return Problem(statusCode: 400, detail: result.Errors?[0]?.Message);
+					return this.ProblemWithErrors(statusCode: 400, detail: result.Errors[0].Message, errors: result.Errors?.Select(e => e?.Metadata)!);
 
 			var fileName = Path.GetFileName(decryptedFilePath);
 			var fileStream = result.Value;

@@ -29,10 +29,10 @@ namespace InstagramClone.Controllers
 			var result = await _postsService.GetPost(postID);
 			if (result.IsSuccess)
 				return Ok(result.Value);
-			else if (result.HasError(e => e.Message == "Not found."))
-				return NotFound();
+			else if (result.HasCodedErrorWithCode(ErrorCode.NotFound))
+				return this.Problem(statusCode: 404, detail: "Post was not found.");
 			else
-				return Problem(statusCode: 400, detail: result.Errors.FirstOrDefault()?.Message);
+				return this.ProblemWithErrors(statusCode: 400, errors: result.Errors.Select(e => e.Metadata));
 		}
 	}
 }

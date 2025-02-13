@@ -30,7 +30,7 @@ namespace InstagramClone.Services
 			string path = Path.GetFullPath($"{_configuration["AppDataFolderName"]}\\{string.Join("\\", filePathParts)}");
 
 			if (!File.Exists(path))
-				return Result.Fail("NotFound");
+				return Result.Fail(new CodedError(ErrorCode.NotFound, "File was not found."));
 
 			string fileName = filePathParts.Last();
 			var memoryStream = new MemoryStream(await File.ReadAllBytesAsync(path));

@@ -38,7 +38,6 @@ namespace InstagramClone.Services
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine(ex.Message);
 				_fileService.DeleteFile(filePath!);
 				return Result.Fail(ex.Message);
 			}
@@ -56,7 +55,7 @@ namespace InstagramClone.Services
 				.Include(p => p.Likes)
 				.Include(p => p.Comments)
 				.FirstOrDefaultAsync(p => p.ID == postID);
-			return post == null ? Result.Fail("Not found.") : Result.Ok(post.GetDTO(downloadFileEndpoint));
+			return post == null ? Result.Fail(new CodedError(ErrorCode.NotFound, "Post was not found.")) : Result.Ok(post.GetDTO(downloadFileEndpoint));
 		}
 
 		public Task<Result<ICollection<Comment>>> GetPostsComments(string postID)
