@@ -1,4 +1,6 @@
-﻿using InstagramClone.Interfaces;
+﻿using FluentResults;
+using InstagramClone.Interfaces;
+using InstagramClone.Utils;
 
 namespace InstagramClone.Services
 {
@@ -18,6 +20,29 @@ namespace InstagramClone.Services
 			await file.CopyToAsync(stream);
 
 			return Path.Combine(path, fileName);
+		}
+
+		public async Task<Result<(MemoryStream, string)>> GetFile(string encryptedFilePath)
+		{
+			string decryptedFilePath;
+			try
+			{
+				decryptedFilePath = Helpers.Encryption.Decrypt(encryptedFilePath);
+			}
+			catch (ArgumentException)
+			{
+				return Result.Fail("Invalid input.");
+			}
+
+			var decryptedFilePathParts = decryptedFilePath.Split(['\\', '/']);
+			string path = Path.GetFullPath($"{_configuration["AppDataFolderName"]}\\{string.Join("\\", decryptedFilePathParts)}");
+
+			if (!File.Exists(path))
+				return Result.Fail("NotFound");
+
+			string fileName = decryptedFilePathParts.Last();
+			var memoryStream = new MemoryStream(await File.ReadAllBytesAsync(path));
+			return Result.Ok((memoryStream, fileName));
 		}
 	}
 }
