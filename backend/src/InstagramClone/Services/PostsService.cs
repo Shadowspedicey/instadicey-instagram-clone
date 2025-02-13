@@ -19,20 +19,29 @@ namespace InstagramClone.Services
 		{
 			string postID = Ulid.NewUlid().ToString();
 			string userID = user.FindFirstValue("sub")!;
-			string filePath = await Helpers.Files.SavePost(_fileService, postDTO.Photo, userID, postID);
-			var encryptedFilePath = Helpers.Encryption.Encrypt(filePath);
-
-			Post newPost = new()
+			string? filePath = default;
+			try
 			{
-				Caption = postDTO.Caption,
-				Photo = encryptedFilePath,
-				User = (await _dbContext.Users.FindAsync(userID))!,
-				CreatedAt = DateTime.Now,
-			};
-			await _dbContext.Posts.AddAsync(newPost);
-			await _dbContext.SaveChangesAsync();
+				filePath = await Helpers.Files.SavePost(_fileService, postDTO.Photo, userID, postID, httpContextAccessor.HttpContext!.RequestAborted);
+				var encryptedFilePath = Helpers.Encryption.Encrypt(filePath);
 
-			return Result.Ok(newPost.GetDTO(downloadFileEndpoint));
+				Post newPost = new()
+				{
+					Caption = postDTO.Caption,
+					Photo = encryptedFilePath,
+					User = (await _dbContext.Users.FindAsync(userID))!,
+					CreatedAt = DateTime.Now,
+				};
+				await _dbContext.Posts.AddAsync(newPost);
+				await _dbContext.SaveChangesAsync();
+				return Result.Ok(newPost.GetDTO(downloadFileEndpoint));
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine(ex.Message);
+				_fileService.DeleteFile(filePath!);
+				return Result.Fail(ex.Message);
+			}
 		}
 
 		public Task<Result> DeletePost(ClaimsPrincipal user, string postID)

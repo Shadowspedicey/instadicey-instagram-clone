@@ -7,8 +7,10 @@ namespace InstagramClone.Services
 	public class FileService(IConfiguration configuration) : IFileService
 	{
 		private readonly IConfiguration _configuration = configuration;
-		public async Task<string> SaveFile(IFormFile file, string path, string fileName)
+		public async Task<string> SaveFile(IFormFile file, string path, string fileName, CancellationToken cancellationToken)
 		{
+			cancellationToken.ThrowIfCancellationRequested();
+
 			string dataFolder = Path.Combine(Directory.GetCurrentDirectory(), _configuration["AppDataFolderName"]);
 			string uploadFolder = Path.Combine(dataFolder, path);
 			if (!Directory.Exists(uploadFolder))
@@ -17,7 +19,7 @@ namespace InstagramClone.Services
 			string filePath = Path.Combine(uploadFolder, fileName);
 
 			using var stream = new FileStream(filePath, FileMode.CreateNew);
-			await file.CopyToAsync(stream);
+			await file.CopyToAsync(stream, cancellationToken);
 
 			return Path.Combine(path, fileName);
 		}
@@ -43,6 +45,14 @@ namespace InstagramClone.Services
 			string fileName = decryptedFilePathParts.Last();
 			var memoryStream = new MemoryStream(await File.ReadAllBytesAsync(path));
 			return Result.Ok((memoryStream, fileName));
+		}
+
+		public void DeleteFile(string path)
+		{
+			string fullPath = Path.GetFullPath($"{_configuration["AppDataFolderName"]}\\{path}");
+
+			if (File.Exists(fullPath))
+				File.Delete(fullPath);
 		}
 	}
 }

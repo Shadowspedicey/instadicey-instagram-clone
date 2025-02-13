@@ -23,7 +23,16 @@ namespace InstagramClone.Utils
 
 		public static class Files
 		{
-			public static async Task<string> SavePost(IFileService fileService, IFormFile post, string userID, string postID) => await fileService.SaveFile(post, Path.Combine(userID, "posts"), $"{postID}{Path.GetExtension(post.FileName)}");
+			public static async Task<string> SavePost(
+				IFileService fileService,
+				IFormFile post,
+				string userID,
+				string postID,
+				CancellationToken cancellationToken)
+			{
+				cancellationToken.ThrowIfCancellationRequested();
+				return await fileService.SaveFile(post, Path.Combine(userID, "posts"), $"{postID}{Path.GetExtension(post.FileName)}", cancellationToken);
+			}
 
 			public static string GetMimeTypeForFileExtension(string filePath)
 			{
