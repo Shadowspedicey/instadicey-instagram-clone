@@ -17,7 +17,7 @@ namespace InstagramClone.Controllers
 		[HttpPost("create")]
 		public async Task<IActionResult> CreatePost(PostCreateDTO postDTO)
 		{
-			var result = await _postsService.CreatePost(User, postDTO);
+			var result = await _postsService.CreatePost(User, postDTO, HttpContext.RequestAborted);
 			if (result.IsSuccess)
 				return CreatedAtAction(nameof(GetPost), new { postID = result.Value.ID }, result.Value.GetDTO(DownloadFileEndpoint));
 			else

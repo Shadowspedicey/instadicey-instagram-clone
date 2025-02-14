@@ -13,21 +13,20 @@ namespace InstagramClone.Services
 	public class PostsService(
 		AppDbContext dbContext,
 		IFileService fileService,
-		IHttpContextAccessor httpContextAccessor,
 		IAuthorizationService authorizationService) : IPostsService
 	{
 		private readonly AppDbContext _dbContext = dbContext;
 		private readonly IFileService _fileService = fileService;
 		private readonly IAuthorizationService _authorizationService = authorizationService;
 
-		public async Task<Result<Post>> CreatePost(ClaimsPrincipal user, PostCreateDTO postDTO)
+		public async Task<Result<Post>> CreatePost(ClaimsPrincipal user, PostCreateDTO postDTO, CancellationToken cancellationToken)
 		{
 			string postID = Ulid.NewUlid().ToString();
 			string userID = user.FindFirstValue("sub")!;
 			string? filePath = default;
 			try
 			{
-				filePath = await Helpers.Files.SavePost(_fileService, postDTO.Photo, userID, postID, httpContextAccessor.HttpContext!.RequestAborted);
+				filePath = await Helpers.Files.SavePost(_fileService, postDTO.Photo, userID, postID, cancellationToken);
 				var encryptedFilePath = Helpers.Encryption.Encrypt(filePath);
 
 				Post newPost = new()
