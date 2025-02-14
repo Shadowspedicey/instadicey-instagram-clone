@@ -7,6 +7,7 @@ using InstagramClone.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using System.Security.Claims;
 
 namespace InstagramClone.Services
@@ -22,33 +23,75 @@ namespace InstagramClone.Services
 		private readonly IFileService _fileService = fileService;
 		private readonly IAuthorizationService _authorizationService = authorizationService;
 
-		public Task<Result<User>> GetUser(string username)
+		public async Task<Result<User>> GetUser(string username)
 		{
-			throw new NotImplementedException();
+			User? user = await _dbContext.Users.FirstOrDefaultAsync(u => u.UserName == username);
+
+			if (user is null)
+				return Result.Fail(new CodedError(ErrorCode.NotFound, "User was not found."));
+			return Result.Ok(user);
 		}
 
-		public Task<Result> EditUserData(ClaimsPrincipal currentUserPrincipal, UserEditDTO userDataDTO)
+		public async Task<Result> EditUserData(ClaimsPrincipal currentUserPrincipal, UserEditDTO userDataDTO, CancellationToken cancellationToken)
 		{
-			throw new NotImplementedException();
+			User currentUser = (await _dbContext.Users.FindAsync(currentUserPrincipal.FindFirstValue("sub")))!;
+
+			List<IError> errors = [];
+
+			if (currentUser.UserName != userDataDTO.Username)
+				errors.AddRange((await ChangeUsername(currentUser, userDataDTO.Username)).Errors);
+			if (currentUser.RealName != userDataDTO.RealName)
+				errors.AddRange((await ChangeRealName(currentUser, userDataDTO.RealName)).Errors);
+			if (currentUser.Bio != userDataDTO.Bio)
+				errors.AddRange((await ChangeBio(currentUser, userDataDTO.Bio)).Errors);
+			if (currentUser.ProfilePic is not null)
+				errors.AddRange((await ChangeProfilePic(currentUser, userDataDTO.NewProfilePic, cancellationToken)).Errors);
+
+			return errors.Count == 0 ? Result.Ok() : Result.Fail(errors);
 		}
-		public Task<Result> ChangeUsername(User currentUser, string newUsername)
+		public async Task<Result> ChangeUsername(User currentUser, string newUsername)
 		{
-			throw new NotImplementedException();
+			// TODO: Move to controller filter
+			newUsername = newUsername.ToLower();
+			bool isDuplicate = await _dbContext.Users.AnyAsync(u => u.UserName == newUsername);
+			if (isDuplicate)
+				return Result.Fail(new CodedError(ErrorCode.Duplicate, $"The username: {newUsername} already exists."));
+
+			var result = await _userManager.SetUserNameAsync(currentUser, newUsername);
+			if (!result.Succeeded)
+				return Result.Fail(result.Errors.Select(e => new Error(e.Description).WithMetadata(new Dictionary<string, object> { { "code", e.Code }, { "description", e.Description } })));
+
+			return Result.Ok();
 		}
 
-		public Task<Result> ChangeRealName(User currentUser, string? newRealName)
+		public async Task<Result> ChangeRealName(User currentUser, string? newRealName)
 		{
-			throw new NotImplementedException();
+			// TODO: Move to filter
+			if (string.IsNullOrWhiteSpace(newRealName))
+				newRealName = null;
+			currentUser.RealName = newRealName;
+			await _dbContext.SaveChangesAsync();
+			return Result.Ok();
 		}
 
-		public Task<Result> ChangeBio(User currentUser, string? newBio)
+		public async Task<Result> ChangeBio(User currentUser, string? newBio)
 		{
-			throw new NotImplementedException();
+			// TODO: Move to filter
+			if (string.IsNullOrWhiteSpace(newBio))
+				newBio = null;
+			currentUser.Bio = newBio;
+			await _dbContext.SaveChangesAsync();
+			return Result.Ok();
 		}
 
-		public Task<Result> ChangeProfilePic(User currentUser, IFormFile newProfilePic)
+		public async Task<Result> ChangeProfilePic(User currentUser, IFormFile? newProfilePic, CancellationToken cancellationToken)
 		{
-			throw new NotImplementedException();
+			string filePath = await _fileService.SaveFile(newProfilePic!, currentUser.Id, $"ProfilePic{Path.GetExtension(newProfilePic!.FileName)}", cancellationToken);
+			string encryptedFilePath = Helpers.Encryption.Encrypt(filePath);
+
+			currentUser.ProfilePic = encryptedFilePath;
+			return Result.Ok();
+
 		}
 
 
@@ -67,24 +110,68 @@ namespace InstagramClone.Services
 		}
 
 
-		public Task<Result> FollowUser(ClaimsPrincipal currentUserPrincipal, string usernameToFollow)
+		public async Task<Result> FollowUser(ClaimsPrincipal currentUserPrincipal, string usernameToFollow)
 		{
-			throw new NotImplementedException();
+			User currentUser = (await _dbContext.Users.FindAsync(currentUserPrincipal.FindFirstValue("sub")))!;
+			User? followedUser = await _dbContext.Users.FirstOrDefaultAsync(u => u.UserName == usernameToFollow);
+			if (followedUser is null)
+				return Result.Fail(new CodedError(ErrorCode.NotFound, "User was not found."));
+
+			if (currentUser.Following.Contains(followedUser))
+				return Result.Fail(new CodedError(ErrorCode.Duplicate, "User is already followed."));
+
+			currentUser.Following.Add(followedUser);
+			followedUser.Followers.Add(currentUser);
+			await _dbContext.SaveChangesAsync();
+			return Result.Ok();
 		}
 
-		public Task<Result> UnfollowUser(ClaimsPrincipal currentUserPrincipal, string usernameToUnfollow)
+		public async Task<Result> UnfollowUser(ClaimsPrincipal currentUserPrincipal, string usernameToUnfollow)
 		{
-			throw new NotImplementedException();
+			User currentUser = (await _dbContext.Users.FindAsync(currentUserPrincipal.FindFirstValue("sub")))!;
+			User? unfollowedUser = await _dbContext.Users.FirstOrDefaultAsync(u => u.UserName == usernameToUnfollow);
+			if (unfollowedUser is null)
+				return Result.Fail(new CodedError(ErrorCode.NotFound, "User was not found."));
+
+			if (!currentUser.Following.Contains(unfollowedUser))
+				return Result.Fail(new CodedError(ErrorCode.Duplicate, "User is already not followed."));
+
+			currentUser.Following.Remove(unfollowedUser);
+			unfollowedUser.Followers.Remove(currentUser);
+			await _dbContext.SaveChangesAsync();
+			return Result.Ok();
 		}
 
-		public Task<Result> SavePost(ClaimsPrincipal currentUserPrincipal, string postID)
+		public async Task<Result> SavePost(ClaimsPrincipal currentUserPrincipal, string postID)
 		{
-			throw new NotImplementedException();
+			User currentUser = (await _dbContext.Users.FindAsync(currentUserPrincipal.FindFirstValue("sub")))!;
+
+			Post? post = await _dbContext.Posts.FindAsync(postID);
+			if (post is null)
+				return Result.Fail(new CodedError(ErrorCode.NotFound, "Post was not found."));
+
+			if (currentUser.SavedPosts.Contains(post))
+				return Result.Fail(new CodedError(ErrorCode.Duplicate, "Post is already saved."));
+
+			currentUser.SavedPosts.Add(post);
+			await _dbContext.SaveChangesAsync();
+			return Result.Ok();
 		}
 
-		public Task<Result> UnsavePost(ClaimsPrincipal currentUserPrincipal, string postID)
+		public async Task<Result> UnsavePost(ClaimsPrincipal currentUserPrincipal, string postID)
 		{
-			throw new NotImplementedException();
+			User currentUser = (await _dbContext.Users.FindAsync(currentUserPrincipal.FindFirstValue("sub")))!;
+
+			Post? post = await _dbContext.Posts.FindAsync(postID);
+			if (post is null)
+				return Result.Fail(new CodedError(ErrorCode.NotFound, "Post was not found."));
+
+			if (!currentUser.SavedPosts.Contains(post))
+				return Result.Fail(new CodedError(ErrorCode.Duplicate, "Post is already not saved."));
+
+			currentUser.SavedPosts.Remove(post);
+			await _dbContext.SaveChangesAsync();
+			return Result.Ok();
 		}
 	}
 }
