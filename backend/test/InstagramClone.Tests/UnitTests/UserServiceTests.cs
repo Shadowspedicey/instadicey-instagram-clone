@@ -66,6 +66,27 @@ namespace InstagramClone.Tests.UnitTests
 			GC.SuppressFinalize(this);
 		}
 
+		private async Task<User> AddAnotherUser()
+		{
+			User otherUser = new()
+			{
+				Email = "anotherexample@domain.com",
+				UserName = "anotheruser",
+				NormalizedUserName = "ANOTHERUSER",
+				IsVerified = false,
+				LastLogin = DateTime.Now,
+				RecentSearches = [],
+				LikedPosts = [],
+				Following = [],
+				Followers = [],
+				CreatedAt = DateTime.Now,
+			};
+			await _dbContext.AddAsync(otherUser);
+			await _dbContext.SaveChangesAsync();
+
+			return otherUser;
+		}
+
 		[Fact]
 		public async Task GetUser_ShouldReturnUser_WhenUserExists()
 		{
@@ -91,20 +112,7 @@ namespace InstagramClone.Tests.UnitTests
 		[Fact]
 		public async Task ChangeUsername_ShouldUpdateUsername_WhenUsernameDoesntCollide()
 		{
-			await _dbContext.AddAsync(new User()
-			{
-				Email = "anotherexample@domain.com",
-				UserName = "anotheruser",
-				NormalizedUserName = "ANOTHERUSER",
-				IsVerified = false,
-				LastLogin = DateTime.Now,
-				RecentSearches = [],
-				LikedPosts = [],
-				Following = [],
-				Followers = [],
-				CreatedAt = DateTime.Now,
-			});
-			await _dbContext.SaveChangesAsync();
+			await AddAnotherUser();
 			UserService userService = new(_dbContext, _userManager, null!);
 
 			var result = await userService.ChangeUsername(_user, "NewUsername");
@@ -121,20 +129,7 @@ namespace InstagramClone.Tests.UnitTests
 		[Theory]
 		public async Task ChangeUsername_ShouldReturnResultFailedWithErrorCodeDuplicate_WhenUsernameIsAlreadyTaken(string newUsername)
 		{
-			await _dbContext.AddAsync(new User()
-			{
-				Email = "anotherexample@domain.com",
-				UserName = "anotheruser",
-				NormalizedUserName = "ANOTHERUSER",
-				IsVerified = false,
-				LastLogin = DateTime.Now,
-				RecentSearches = [],
-				LikedPosts = [],
-				Following = [],
-				Followers = [],
-				CreatedAt = DateTime.Now,
-			});
-			await _dbContext.SaveChangesAsync();
+			await AddAnotherUser();
 			UserService userService = new(_dbContext, _userManager, null!);
 
 			var result = await userService.ChangeUsername(_user, newUsername);
@@ -208,21 +203,7 @@ namespace InstagramClone.Tests.UnitTests
 		[Fact]
 		public async Task FollowUser_ShouldReturnSuccess_WhenFollowedUserExistsAndIsntAlreadyFollowed()
 		{
-			User otherUser = new()
-			{
-				Email = "anotherexample@domain.com",
-				UserName = "anotheruser",
-				NormalizedUserName = "ANOTHERUSER",
-				IsVerified = false,
-				LastLogin = DateTime.Now,
-				RecentSearches = [],
-				LikedPosts = [],
-				Following = [],
-				Followers = [],
-				CreatedAt = DateTime.Now,
-			};
-			await _dbContext.AddAsync(otherUser);
-			await _dbContext.SaveChangesAsync();
+			User otherUser = await AddAnotherUser();
 			UserService userService = new(_dbContext, null!, null!);
 
 			var result = await userService.FollowUser(_claimsPrincipal, "anotheruser");
@@ -237,20 +218,8 @@ namespace InstagramClone.Tests.UnitTests
 		[Fact]
 		public async Task FollowUser_ShouldReturnResultFailedWithErrorCodeDuplicate_WhenFollowedUserExistsAndIsAlreadyFollowed()
 		{
-			User otherUser = new()
-			{
-				Email = "anotherexample@domain.com",
-				UserName = "anotheruser",
-				NormalizedUserName = "ANOTHERUSER",
-				IsVerified = false,
-				LastLogin = DateTime.Now,
-				RecentSearches = [],
-				LikedPosts = [],
-				Following = [],
-				Followers = [_user],
-				CreatedAt = DateTime.Now,
-			};
-			await _dbContext.AddAsync(otherUser);
+			User otherUser = await AddAnotherUser();
+			otherUser.Followers.Add(_user);
 			_user.Following.Add(otherUser);
 			await _dbContext.SaveChangesAsync();
 			UserService userService = new(_dbContext, null!, null!);
@@ -281,20 +250,7 @@ namespace InstagramClone.Tests.UnitTests
 		[Fact]
 		public async Task UnfollowUser_ShouldReturnSuccess_WhenUserExistsAndIsAlreadyFollowed()
 		{
-			User otherUser = new()
-			{
-				Email = "anotherexample@domain.com",
-				UserName = "anotheruser",
-				NormalizedUserName = "ANOTHERUSER",
-				IsVerified = false,
-				LastLogin = DateTime.Now,
-				RecentSearches = [],
-				LikedPosts = [],
-				Following = [],
-				Followers = [_user],
-				CreatedAt = DateTime.Now,
-			};
-			await _dbContext.AddAsync(otherUser);
+			User otherUser = await AddAnotherUser();
 			_user.Following.Add(otherUser);
 			await _dbContext.SaveChangesAsync();
 			UserService userService = new(_dbContext, null!, null!);
@@ -311,21 +267,7 @@ namespace InstagramClone.Tests.UnitTests
 		[Fact]
 		public async Task UnfollowUser_ShouldReturnResultFailed_WhenUserExistsAndIsntFollowed()
 		{
-			User otherUser = new()
-			{
-				Email = "anotherexample@domain.com",
-				UserName = "anotheruser",
-				NormalizedUserName = "ANOTHERUSER",
-				IsVerified = false,
-				LastLogin = DateTime.Now,
-				RecentSearches = [],
-				LikedPosts = [],
-				Following = [],
-				Followers = [],
-				CreatedAt = DateTime.Now,
-			};
-			await _dbContext.AddAsync(otherUser);
-			await _dbContext.SaveChangesAsync();
+			User otherUser = await AddAnotherUser();
 			UserService userService = new(_dbContext, null!, null!);
 
 			var result = await userService.UnfollowUser(_claimsPrincipal, "anotheruser");
