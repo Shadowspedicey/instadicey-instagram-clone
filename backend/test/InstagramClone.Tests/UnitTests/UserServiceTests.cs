@@ -442,7 +442,7 @@ namespace InstagramClone.Tests.UnitTests
 			var result = await userService.UnsavePost(_claimsPrincipal, post.ID);
 
 			Assert.False(result.IsSuccess);
-			Assert.Equal(ErrorCode.Duplicate, result.Errors.First().Metadata["error"]);
+			Assert.Equal(Enum.GetName(ErrorCode.Duplicate), result.Errors.First().Metadata["code"]);
 		}
 
 		[Fact]
@@ -453,7 +453,7 @@ namespace InstagramClone.Tests.UnitTests
 			var result = await userService.UnsavePost(_claimsPrincipal, Ulid.NewUlid().ToString());
 
 			Assert.False(result.IsSuccess);
-			Assert.Equal(ErrorCode.NotFound, result.Errors.First().Metadata["error"]);
+			Assert.Equal(Enum.GetName(ErrorCode.NotFound), result.Errors.First().Metadata["code"]);
 		}
 	}
 }
