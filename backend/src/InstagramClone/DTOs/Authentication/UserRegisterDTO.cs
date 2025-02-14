@@ -8,7 +8,7 @@ namespace InstagramClone.DTOs.Authentication
 		[EmailAddress]
 		public required string Email { get; set; }
 		[StringLength(50)]
-		public required string RealName { get; set; }
+		public string? RealName { get; set; }
 		[Username]
 		public required string Username { get; set; }
 		public required string Password { get; set; }

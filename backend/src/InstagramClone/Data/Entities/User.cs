@@ -6,7 +6,7 @@ namespace InstagramClone.Data.Entities
 	public class User : IdentityUser
 	{
 		[StringLength(50)]
-		public required string RealName { get; set; }
+		public string? RealName { get; set; }
 		public string? ProfilePic { get; set; }
 		[StringLength(150)]
 		public string? Bio { get; set; }
