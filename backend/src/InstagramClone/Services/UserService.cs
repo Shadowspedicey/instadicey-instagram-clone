@@ -4,10 +4,8 @@ using InstagramClone.Data.Entities;
 using InstagramClone.DTOs.Profile;
 using InstagramClone.Interfaces;
 using InstagramClone.Utils;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Hosting;
 using System.Security.Claims;
 
 namespace InstagramClone.Services
@@ -15,13 +13,11 @@ namespace InstagramClone.Services
 	public class UserService(
 		AppDbContext dbContext,
 		UserManager<User> userManager,
-		IFileService fileService,
-		IAuthorizationService authorizationService) : IUserService
+		IFileService fileService) : IUserService
 	{
 		private readonly AppDbContext _dbContext = dbContext;
 		private readonly UserManager<User> _userManager = userManager;
 		private readonly IFileService _fileService = fileService;
-		private readonly IAuthorizationService _authorizationService = authorizationService;
 
 		public async Task<Result<User>> GetUser(string username)
 		{

@@ -5,7 +5,6 @@ using InstagramClone.Utils;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Hosting;
 using Moq;
 using System.Security.Claims;
 
@@ -70,7 +69,7 @@ namespace InstagramClone.Tests.UnitTests
 		[Fact]
 		public async Task GetUser_ShouldReturnUser_WhenUserExists()
 		{
-			UserService userService = new(_dbContext, null!, null!, null!);
+			UserService userService = new(_dbContext, null!, null!);
 
 			var result = await userService.GetUser("exampleusername");
 
@@ -81,7 +80,7 @@ namespace InstagramClone.Tests.UnitTests
 		[Fact]
 		public async Task GetUser_ShouldReturnResultFailedWithNotFoundErrorCode_WhenUserDoesntExists()
 		{
-			UserService userSerice = new(_dbContext, null!, null!, null!);
+			UserService userSerice = new(_dbContext, null!, null!);
 
 			var result = await userSerice.GetUser("nonexistingusername");
 
@@ -106,7 +105,7 @@ namespace InstagramClone.Tests.UnitTests
 				CreatedAt = DateTime.Now,
 			});
 			await _dbContext.SaveChangesAsync();
-			UserService userService = new(_dbContext, _userManager, null!, null!);
+			UserService userService = new(_dbContext, _userManager, null!);
 
 			var result = await userService.ChangeUsername(_user, "NewUsername");
 			await _dbContext.Entry(_user).ReloadAsync();
@@ -136,7 +135,7 @@ namespace InstagramClone.Tests.UnitTests
 				CreatedAt = DateTime.Now,
 			});
 			await _dbContext.SaveChangesAsync();
-			UserService userService = new(_dbContext, _userManager, null!, null!);
+			UserService userService = new(_dbContext, _userManager, null!);
 
 			var result = await userService.ChangeUsername(_user, newUsername);
 			await _dbContext.Entry(_user).ReloadAsync();
@@ -152,7 +151,7 @@ namespace InstagramClone.Tests.UnitTests
 		[InlineData("Ahmed")]
 		public async Task ChangeRealName_ShouldUpdateRealname_WhenValid(string? newRealName)
 		{
-			UserService userService = new(_dbContext, null!, null!, null!);
+			UserService userService = new(_dbContext, null!, null!);
 
 			var result = await userService.ChangeRealName(_user, newRealName);
 			await _dbContext.Entry(_user).ReloadAsync();
@@ -166,7 +165,7 @@ namespace InstagramClone.Tests.UnitTests
 		[InlineData("  ")]
 		public async Task ChangeRealName_ShouldSetNameToNull_WhenEmptyString(string? emptyRealName)
 		{
-			UserService userService = new(_dbContext, null!, null!, null!);
+			UserService userService = new(_dbContext, null!, null!);
 
 			var result = await userService.ChangeRealName(_user, emptyRealName);
 			await _dbContext.Entry(_user).ReloadAsync();
@@ -181,7 +180,7 @@ namespace InstagramClone.Tests.UnitTests
 		[InlineData("This is a random bio example again.")]
 		public async Task ChangeBio_ShouldUpdateBio_WhenValidData(string? bio)
 		{
-			UserService userService = new(_dbContext, null!, null!, null!);
+			UserService userService = new(_dbContext, null!, null!);
 
 			var result = await userService.ChangeBio(_user, bio);
 			await _dbContext.Entry(_user).ReloadAsync();
@@ -195,7 +194,7 @@ namespace InstagramClone.Tests.UnitTests
 		[InlineData(" ")]
 		public async Task ChangeBio_ShouldSetBioToNull_WhenEmptyString(string? emptyBio)
 		{
-			UserService userService = new(_dbContext, null!, null!, null!);
+			UserService userService = new(_dbContext, null!, null!);
 
 			var result = await userService.ChangeBio(_user, emptyBio);
 			await _dbContext.Entry(_user).ReloadAsync();
@@ -224,7 +223,7 @@ namespace InstagramClone.Tests.UnitTests
 			};
 			await _dbContext.AddAsync(otherUser);
 			await _dbContext.SaveChangesAsync();
-			UserService userService = new(_dbContext, null!, null!, null!);
+			UserService userService = new(_dbContext, null!, null!);
 
 			var result = await userService.FollowUser(_claimsPrincipal, "anotheruser");
 			await _dbContext.Entry(_user).ReloadAsync();
@@ -254,7 +253,7 @@ namespace InstagramClone.Tests.UnitTests
 			await _dbContext.AddAsync(otherUser);
 			_user.Following.Add(otherUser);
 			await _dbContext.SaveChangesAsync();
-			UserService userService = new(_dbContext, null!, null!, null!);
+			UserService userService = new(_dbContext, null!, null!);
 
 			var result = await userService.FollowUser(_claimsPrincipal, "anotheruser");
 			await _dbContext.Entry(_user).ReloadAsync();
@@ -269,7 +268,7 @@ namespace InstagramClone.Tests.UnitTests
 		[Fact]
 		public async Task FollowUser_ShouldReturnResultFailedWithErrorCodeNotFound_WhenFollowedUserDoesntExist()
 		{
-			UserService userService = new(_dbContext, null!, null!, null!);
+			UserService userService = new(_dbContext, null!, null!);
 
 			var result = await userService.FollowUser(_claimsPrincipal, "anotheruser");
 			await _dbContext.Entry(_user).ReloadAsync();
@@ -298,7 +297,7 @@ namespace InstagramClone.Tests.UnitTests
 			await _dbContext.AddAsync(otherUser);
 			_user.Following.Add(otherUser);
 			await _dbContext.SaveChangesAsync();
-			UserService userService = new(_dbContext, null!, null!, null!);
+			UserService userService = new(_dbContext, null!, null!);
 
 			var result = await userService.UnfollowUser(_claimsPrincipal, "anotheruser");
 			await _dbContext.Entry(_user).ReloadAsync();
@@ -327,7 +326,7 @@ namespace InstagramClone.Tests.UnitTests
 			};
 			await _dbContext.AddAsync(otherUser);
 			await _dbContext.SaveChangesAsync();
-			UserService userService = new(_dbContext, null!, null!, null!);
+			UserService userService = new(_dbContext, null!, null!);
 
 			var result = await userService.UnfollowUser(_claimsPrincipal, "anotheruser");
 
@@ -338,7 +337,7 @@ namespace InstagramClone.Tests.UnitTests
 		[Fact]
 		public async Task UnfollowUser_ShouldReturnResultFailed_WhenUserDoesntExist()
 		{
-			UserService userService = new(_dbContext, null!, null!, null!);
+			UserService userService = new(_dbContext, null!, null!);
 
 			var result = await userService.UnfollowUser(_claimsPrincipal, "anotheruser");
 
@@ -360,7 +359,7 @@ namespace InstagramClone.Tests.UnitTests
 			};
 			await _dbContext.Posts.AddAsync(post);
 			await _dbContext.SaveChangesAsync();
-			UserService userService = new(_dbContext, null!, null!, null!);
+			UserService userService = new(_dbContext, null!, null!);
 
 			var result = await userService.SavePost(_claimsPrincipal, post.ID);
 			await _dbContext.Entry(_user).ReloadAsync();
@@ -382,7 +381,7 @@ namespace InstagramClone.Tests.UnitTests
 			await _dbContext.Posts.AddAsync(post);
 			_user.SavedPosts.Add(post);
 			await _dbContext.SaveChangesAsync();
-			UserService userService = new(_dbContext, null!, null!, null!);
+			UserService userService = new(_dbContext, null!, null!);
 
 			var result = await userService.SavePost(_claimsPrincipal, post.ID);
 			await _dbContext.Entry(_user).ReloadAsync();
@@ -395,7 +394,7 @@ namespace InstagramClone.Tests.UnitTests
 		[Fact]
 		public async Task SavePost_ShouldReturnFailedResult_WhenPostDoesntExist()
 		{
-			UserService userService = new(_dbContext, null!, null!, null!);
+			UserService userService = new(_dbContext, null!, null!);
 
 			var result = await userService.SavePost(_claimsPrincipal, Ulid.NewUlid().ToString());
 
@@ -416,7 +415,7 @@ namespace InstagramClone.Tests.UnitTests
 			await _dbContext.Posts.AddAsync(post);
 			_user.SavedPosts.Add(post);
 			await _dbContext.SaveChangesAsync();
-			UserService userService = new(_dbContext, null!, null!, null!);
+			UserService userService = new(_dbContext, null!, null!);
 
 			var result = await userService.UnsavePost(_claimsPrincipal, post.ID);
 			await _dbContext.Entry(_user).ReloadAsync();
@@ -437,7 +436,7 @@ namespace InstagramClone.Tests.UnitTests
 			};
 			await _dbContext.Posts.AddAsync(post);
 			await _dbContext.SaveChangesAsync();
-			UserService userService = new(_dbContext, null!, null!, null!);
+			UserService userService = new(_dbContext, null!, null!);
 
 			var result = await userService.UnsavePost(_claimsPrincipal, post.ID);
 
@@ -448,7 +447,7 @@ namespace InstagramClone.Tests.UnitTests
 		[Fact]
 		public async Task UnsavePost_ShouldReturnFailedResult_WhenPostDoesntExist()
 		{
-			UserService userService = new(_dbContext, null!, null!, null!);
+			UserService userService = new(_dbContext, null!, null!);
 
 			var result = await userService.UnsavePost(_claimsPrincipal, Ulid.NewUlid().ToString());
 
