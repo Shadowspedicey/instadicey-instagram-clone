@@ -396,5 +396,158 @@ namespace InstagramClone.Tests.UnitTests
 			Assert.False(result.IsSuccess);
 			Assert.Equal(Enum.GetName(ErrorCode.NotFound), result.Errors.First().Metadata["code"]);
 		}
+
+		// Recent searches
+
+		[Fact]
+		public async Task AddToRecentSearches_ShouldReturnSuccess_WhenSearchedUserExists()
+		{
+			User otherUser = await AddAnotherUser();
+			UserService userService = new(_dbContext, null!, null!);
+
+			var result = await userService.AddToRecentSearches(_claimsPrincipal, otherUser.UserName!);
+			await _dbContext.Entry(_user).ReloadAsync();
+
+			Assert.True(result.IsSuccess);
+			Assert.Contains(_user.RecentSearches, u => u.UserName == otherUser.UserName);
+		}
+
+		[Fact]
+		public async Task AddToRecentSearches_ShouldReturnFailedResultWithErrorCodeNotFound_WhenSearchedUserDoesntExist()
+		{
+			UserService userService = new(_dbContext, null!, null!);
+
+			var result = await userService.AddToRecentSearches(_claimsPrincipal, "anotheruser");
+
+			Assert.False(result.IsSuccess);
+			Assert.Equal(Enum.GetName(ErrorCode.NotFound), result.Errors[0].Metadata["code"]);
+		}
+
+		[Fact]
+		public async Task AddToRecentSearches_ShouldNotAddUserAgain_WhenAlreadyInList()
+		{
+			User otherUser = await AddAnotherUser();
+			_user.RecentSearches.Add(otherUser);
+			await _dbContext.SaveChangesAsync();
+			UserService userService = new(_dbContext, null!, null!);
+
+			var result = await userService.AddToRecentSearches(_claimsPrincipal, otherUser.UserName!);
+			await _dbContext.Entry(_user).ReloadAsync();
+
+			Assert.True(result.IsSuccess);
+			Assert.Single(_user.RecentSearches);
+		}
+
+		[Fact]
+		public async Task AddToRecentSearches_ShouldPutUserAtStartOfList_WhenAlreadyInListAndWasSearchedBeforeAnotherUser()
+		{
+			User otherUser = await AddAnotherUser();
+			_user.RecentSearches.Add(Mock.Of<User>());
+			_user.RecentSearches.Add(otherUser);
+			await _dbContext.SaveChangesAsync();
+			UserService userService = new(_dbContext, null!, null!);
+
+			var result = await userService.AddToRecentSearches(_claimsPrincipal, otherUser.UserName!);
+			await _dbContext.Entry(_user).ReloadAsync();
+
+			Assert.True(result.IsSuccess);
+			Assert.Equal(2, _user.RecentSearches.Count);
+			Assert.Equal(otherUser.UserName, _user.RecentSearches.First().UserName);
+		}
+
+		[Fact]
+		public async Task RemoveFromRecentSearches_ShouldReturnSuccess_WhenSearchedUserExists()
+		{
+			User otherUser = await AddAnotherUser();
+			_user.RecentSearches.Add(otherUser);
+			await _dbContext.SaveChangesAsync();
+			UserService userService = new(_dbContext, null!, null!);
+
+			var result = await userService.RemoveFromRecentSearches(_claimsPrincipal, otherUser.UserName!);
+			await _dbContext.Entry(_user).ReloadAsync();
+
+			Assert.True(result.IsSuccess);
+			Assert.Empty(_user.RecentSearches);
+		}
+
+		[Fact]
+		public async Task RemoveFromRecentSearches_ShouldReturnFailedResultWithErrorCodeNotFound_WhenSearchedUserDoesntExist()
+		{
+			UserService userService = new(_dbContext, null!, null!);
+
+			var result = await userService.RemoveFromRecentSearches(_claimsPrincipal, "anotheruser");
+
+			Assert.False(result.IsSuccess);
+			Assert.Equal(Enum.GetName(ErrorCode.NotFound), result.Errors[0].Metadata["code"]);
+		}
+
+		[Fact]
+		public async Task RemoveFromRecentSearches_ShouldReturnFailedResultWithErrorCodeDuplicate_WhenSearchedUserExistsAndIsNotInList()
+		{
+			User otherUser = await AddAnotherUser();
+			UserService userService = new(_dbContext, null!, null!);
+
+			var result = await userService.RemoveFromRecentSearches(_claimsPrincipal, otherUser.UserName!);
+
+			Assert.False(result.IsSuccess);
+			Assert.Equal(Enum.GetName(ErrorCode.Duplicate), result.Errors[0].Metadata["code"]);
+		}
+
+		[Fact]
+		public async Task ClearRecentSearches_ShouldReturnSuccess_IfListIsEmpty()
+		{
+			UserService userService = new(_dbContext, null!, null!);
+
+			var result = await userService.ClearRecentSearches(_claimsPrincipal);
+
+			Assert.True(result.IsSuccess);
+		}
+
+		[Fact]
+		public async Task ClearRecentSearches_ShouldReturnSuccess_IfListHasOneSearch()
+		{
+			User otherUser = await AddAnotherUser();
+			_user.RecentSearches.Add(otherUser);
+			await _dbContext.SaveChangesAsync();
+			UserService userService = new(_dbContext, null!, null!);
+
+			var result = await userService.ClearRecentSearches(_claimsPrincipal);
+			await _dbContext.Entry(_user).ReloadAsync();
+
+			Assert.True(result.IsSuccess);
+			Assert.Empty(_user.RecentSearches);
+		}
+
+		[Theory]
+		[InlineData(2)]
+		[InlineData(3)]
+		[InlineData(5)]
+		public async Task ClearRecentSearches_ShouldReturnSuccess_IfListHasManySearches(int n)
+		{
+			for (int i = 0; i < n; i++)
+			{
+				var u = new User
+				{
+					UserName = $"anotheruser{i}",
+					Email = $"anotheruser{i}@domain.com",
+					IsVerified = false,
+					Followers = [],
+					Following = [],
+					RecentSearches = [],
+					CreatedAt = DateTime.Now,
+					LastLogin = DateTime.Now,
+				};
+				await _dbContext.Users.AddAsync(u);
+				_user.RecentSearches.Add(u);
+			}
+			await _dbContext.SaveChangesAsync();
+			UserService userService = new(_dbContext, null!, null!);
+
+			var result = await userService.ClearRecentSearches(_claimsPrincipal);
+			await _dbContext.Entry(_user).ReloadAsync();
+
+			Assert.True(result.IsSuccess);
+			Assert.Empty(_user.RecentSearches);
+		}
 	}
 }
