@@ -19,9 +19,8 @@ namespace InstagramClone.Services
 		private readonly AppDbContext _dbContext = dbContext;
 		private readonly IFileService _fileService = fileService;
 		private readonly IAuthorizationService _authorizationService = authorizationService;
-		private readonly string downloadFileEndpoint = $"{httpContextAccessor.HttpContext?.Request.Scheme}://{httpContextAccessor.HttpContext?.Request.Host}/file/";
 
-		public async Task<Result<PostGetDTO>> CreatePost(ClaimsPrincipal user, PostCreateDTO postDTO)
+		public async Task<Result<Post>> CreatePost(ClaimsPrincipal user, PostCreateDTO postDTO)
 		{
 			string postID = Ulid.NewUlid().ToString();
 			string userID = user.FindFirstValue("sub")!;
@@ -40,7 +39,7 @@ namespace InstagramClone.Services
 				};
 				await _dbContext.Posts.AddAsync(newPost);
 				await _dbContext.SaveChangesAsync();
-				return Result.Ok(newPost.GetDTO(downloadFileEndpoint));
+				return Result.Ok(newPost);
 			}
 			catch (Exception ex)
 			{
@@ -65,14 +64,14 @@ namespace InstagramClone.Services
 			return Result.Ok();
 		}
 
-		public async Task<Result<PostGetDTO>> GetPost(string postID)
+		public async Task<Result<Post>> GetPost(string postID)
 		{
 			Post? post = await _dbContext.Posts
 				.Include(p => p.User)
 				.Include(p => p.Likes)
 				.Include(p => p.Comments)
 				.FirstOrDefaultAsync(p => p.ID == postID);
-			return post == null ? Result.Fail(new CodedError(ErrorCode.NotFound, "Post was not found.")) : Result.Ok(post.GetDTO(downloadFileEndpoint));
+			return post == null ? Result.Fail(new CodedError(ErrorCode.NotFound, "Post was not found.")) : Result.Ok(post);
 		}
 
 		public Task<Result<ICollection<Comment>>> GetPostsComments(string postID)

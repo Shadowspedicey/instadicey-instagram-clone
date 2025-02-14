@@ -11,6 +11,7 @@ namespace InstagramClone.Controllers
 	public class PostController(IPostsService postsService) : ControllerBase
 	{
 		private readonly IPostsService _postsService = postsService;
+		private string DownloadFileEndpoint => $"{Request.Scheme}://{Request.Host}/file/";
 
 		[Authorize]
 		[HttpPost("create")]
@@ -18,7 +19,7 @@ namespace InstagramClone.Controllers
 		{
 			var result = await _postsService.CreatePost(User, postDTO);
 			if (result.IsSuccess)
-				return CreatedAtAction(nameof(GetPost), new { postID = result.Value.ID }, result.Value);
+				return CreatedAtAction(nameof(GetPost), new { postID = result.Value.ID }, result.Value.GetDTO(DownloadFileEndpoint));
 			else
 				return BadRequest();
 		}
@@ -28,7 +29,7 @@ namespace InstagramClone.Controllers
 		{
 			var result = await _postsService.GetPost(postID);
 			if (result.IsSuccess)
-				return Ok(result.Value);
+				return Ok(result.Value.GetDTO(DownloadFileEndpoint));
 			else if (result.HasCodedErrorWithCode(ErrorCode.NotFound))
 				return this.Problem(statusCode: 404, detail: "Post was not found.");
 			else
