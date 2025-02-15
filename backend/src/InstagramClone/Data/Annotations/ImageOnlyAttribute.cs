@@ -8,7 +8,9 @@ namespace InstagramClone.Data.Annotations
 		private readonly string[] allowedExtensions = { ".png", ".jpg", "jpeg" };
 		protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
 		{
-			if (
+			if (value is null)
+				return ValidationResult.Success;
+			else if (
 					value is IFormFile file &&
 					allowedExtensions.Contains(Path.GetExtension(file.FileName)) &&
 					Regex.IsMatch(file.ContentType, "^image/")
