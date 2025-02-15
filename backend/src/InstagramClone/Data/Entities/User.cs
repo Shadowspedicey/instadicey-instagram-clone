@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using InstagramClone.DTOs.Profile;
+using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
 
 namespace InstagramClone.Data.Entities
@@ -21,6 +22,19 @@ namespace InstagramClone.Data.Entities
 		public virtual ICollection<Post> Posts { get; set; } = [];
 		public virtual ICollection<Post> LikedPosts { get; set; } = [];
 		public virtual ICollection<Post> SavedPosts { get; set; } = [];
+
+		public UserProfileDTO GetDTO(string downloadEndpoint) => new()
+		{
+			Username = UserName!,
+			RealName = RealName,
+			Bio = Bio,
+			ProfilePic = $"{downloadEndpoint}{ProfilePic}",
+			IsVerified = IsVerified,
+			Following = Following.Select(u => u.GetMinimalDTO(downloadEndpoint)).ToList(),
+			Followers = Followers.Select(u => u.GetMinimalDTO(downloadEndpoint)).ToList(),
+			Posts = Posts.Select(p => p.GetMinimalDTO(downloadEndpoint)).ToList(),
+		};
+
 		public UserMinimalProfileDTO GetMinimalDTO(string downloadEndpoint) => new(UserName!, ProfilePic!, downloadEndpoint);
 	}
 }
