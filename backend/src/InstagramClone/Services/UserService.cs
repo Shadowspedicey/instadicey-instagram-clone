@@ -40,7 +40,7 @@ namespace InstagramClone.Services
 				errors.AddRange((await ChangeRealName(currentUser, userDataDTO.RealName)).Errors);
 			if (currentUser.Bio != userDataDTO.Bio)
 				errors.AddRange((await ChangeBio(currentUser, userDataDTO.Bio)).Errors);
-			if (currentUser.ProfilePic is not null)
+			if (userDataDTO.NewProfilePic is not null)
 				errors.AddRange((await ChangeProfilePic(currentUser, userDataDTO.NewProfilePic, cancellationToken)).Errors);
 
 			return errors.Count == 0 ? Result.Ok() : Result.Fail(errors);
