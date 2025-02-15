@@ -7,6 +7,7 @@ namespace InstagramClone.Data
 	public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbContext<User>(options)
 	{
 		public DbSet<Post> Posts { get; set; }
+		public DbSet<UserSearch> UserSearches { get; set; }
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
@@ -65,6 +66,24 @@ namespace InstagramClone.Data
 						e.Property("FollowersId").HasColumnName("UserID");
 						e.Property("FollowingId").HasColumnName("FollowedUserID");
 					});
+				
+				//U.HasMany(u1 => u1.RecentSearches)
+				//	.WithMany()
+				//	.UsingEntity(jt =>
+				//	{
+				//		jt.ToTable("UserSearches");
+				//		jt.Property("RecentSearchesId").HasColumnName("SearchedUserID");
+				//		jt.Property("UserId").HasColumnName("UserID");
+				//	});
+			});
+
+			modelBuilder.Entity<UserSearch>(US =>
+			{
+				US.HasKey(us => new { us.UserID, us.SearchedUserID });
+				US.HasOne(us => us.User)
+					.WithMany(u => u.RecentSearches)
+					.HasForeignKey(us => us.UserID)
+					.OnDelete(DeleteBehavior.ClientCascade);
 			});
 
 			modelBuilder.Entity<Comment>(C =>
