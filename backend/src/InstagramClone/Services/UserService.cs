@@ -91,18 +91,41 @@ namespace InstagramClone.Services
 		}
 
 
-		public Task<Result> AddToRecentSearches(ClaimsPrincipal currentUserPrincipal, string searchedUsername)
+		public async Task<Result> AddToRecentSearches(ClaimsPrincipal currentUserPrincipal, string searchedUsername)
 		{
-			throw new NotImplementedException();
+			User currentUser = (await _dbContext.Users.FindAsync(currentUserPrincipal.FindFirstValue("sub")))!;
+			User? searchedUser = await _dbContext.Users.FirstOrDefaultAsync(u => u.UserName == searchedUsername);
+			if (searchedUser is null)
+				return Result.Fail(new CodedError(ErrorCode.NotFound, $"User '{searchedUsername}' was not found"));
+
+			currentUser.RecentSearches.Remove(searchedUser);
+
+			currentUser.RecentSearches = currentUser.RecentSearches.Prepend(searchedUser).ToList();
+			await _dbContext.SaveChangesAsync();
+			return Result.Ok();
 		}
-		public Task<Result> RemoveFromRecentSearches(ClaimsPrincipal currentUserPrincipal, string removedUsername)
+		public async Task<Result> RemoveFromRecentSearches(ClaimsPrincipal currentUserPrincipal, string removedUsername)
 		{
-			throw new NotImplementedException();
+			User currentUser = (await _dbContext.Users.FindAsync(currentUserPrincipal.FindFirstValue("sub")))!;
+			User? removedUser = await _dbContext.Users.FirstOrDefaultAsync(u => u.UserName == removedUsername);
+			if (removedUser is null)
+				return Result.Fail(new CodedError(ErrorCode.NotFound, $"User '{removedUsername}' was not found"));
+
+			if (!currentUser.RecentSearches.Remove(removedUser))
+				return Result.Fail(new CodedError(ErrorCode.Duplicate, $"User '{removedUsername}' doesn't exist in recent searches."));
+			else
+			{
+				await _dbContext.SaveChangesAsync();
+				return Result.Ok();
+			}
 		}
 
-		public Task<Result> ClearRecentSearches(ClaimsPrincipal currentUserPrincipal)
+		public async Task<Result> ClearRecentSearches(ClaimsPrincipal currentUserPrincipal)
 		{
-			throw new NotImplementedException();
+			User currentUser = (await _dbContext.Users.FindAsync(currentUserPrincipal.FindFirstValue("sub")))!;
+			currentUser.RecentSearches.Clear();
+			await _dbContext.SaveChangesAsync();
+			return Result.Ok();
 		}
 
 
