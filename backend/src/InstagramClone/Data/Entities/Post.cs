@@ -1,4 +1,5 @@
 ﻿using InstagramClone.DTOs.Posts;
+using InstagramClone.DTOs.Profile;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System.ComponentModel.DataAnnotations;
 
@@ -25,8 +26,15 @@ namespace InstagramClone.Data.Entities
 				Caption = Caption,
 				Photo = $"{fileDownloadEndpoint}{Photo}",
 				CreatedAt = CreatedAt,
-				User = new DTOs.Profile.UserMinimalProfileDTO(User.UserName!, User.ProfilePic!, fileDownloadEndpoint)
+				User = new UserMinimalProfileDTO(User.UserName!, User.ProfilePic!, fileDownloadEndpoint)
 			};
 		}
+		public UserProfilePost GetMinimalDTO(string fileDownloadEndpoint) => new()
+		{
+			ID = ID,
+			Photo = $"{fileDownloadEndpoint}{Photo}",
+			LikesCount = Likes.Count,
+			CommentsCount = Comments.Count
+		};
 	}
 }
