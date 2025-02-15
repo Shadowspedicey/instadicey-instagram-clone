@@ -21,5 +21,6 @@ namespace InstagramClone.Data.Entities
 		public virtual ICollection<Post> Posts { get; set; } = [];
 		public virtual ICollection<Post> LikedPosts { get; set; } = [];
 		public virtual ICollection<Post> SavedPosts { get; set; } = [];
+		public UserMinimalProfileDTO GetMinimalDTO(string downloadEndpoint) => new(UserName!, ProfilePic!, downloadEndpoint);
 	}
 }
