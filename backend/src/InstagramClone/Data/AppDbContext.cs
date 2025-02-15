@@ -56,6 +56,15 @@ namespace InstagramClone.Data
 						j.ToTable("CommentsLikes");
 						j.Property("LikesId").HasColumnName("UserID");
 					});
+
+				U.HasMany(u1 => u1.Following)
+					.WithMany(u2 => u2.Followers)
+					.UsingEntity(e =>
+					{
+						e.ToTable("UserFollowing");
+						e.Property("FollowersId").HasColumnName("UserID");
+						e.Property("FollowingId").HasColumnName("FollowedUserID");
+					});
 			});
 
 			modelBuilder.Entity<Comment>(C =>
