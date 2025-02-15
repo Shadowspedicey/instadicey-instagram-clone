@@ -1,4 +1,6 @@
-﻿namespace InstagramClone.DTOs.Posts
+﻿using InstagramClone.DTOs.Profile;
+
+namespace InstagramClone.DTOs.Posts
 {
 	public class PostGetDTO
 	{
@@ -6,11 +8,6 @@
 		public string? Caption { get; set; }
 		public required string Photo { get; set; }
 		public required DateTime CreatedAt { get; set; }
-		public required PostOwnerDTO User { get; set; }
-		public class PostOwnerDTO
-		{
-			public required string Username { get; set; }
-			public required string ProfilePic { get; set; }
-		}
+		public required UserMinimalProfileDTO User { get; set; }
 	}
 }

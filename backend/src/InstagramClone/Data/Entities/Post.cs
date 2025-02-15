@@ -1,7 +1,6 @@
 ﻿using InstagramClone.DTOs.Posts;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace InstagramClone.Data.Entities
 {
@@ -26,11 +25,7 @@ namespace InstagramClone.Data.Entities
 				Caption = Caption,
 				Photo = $"{fileDownloadEndpoint}{Photo}",
 				CreatedAt = CreatedAt,
-				User = new PostGetDTO.PostOwnerDTO
-				{
-					Username = User.UserName!,
-					ProfilePic = User.ProfilePic!
-				}
+				User = new DTOs.Profile.UserMinimalProfileDTO(User.UserName!, User.ProfilePic!, fileDownloadEndpoint)
 			};
 		}
 	}
