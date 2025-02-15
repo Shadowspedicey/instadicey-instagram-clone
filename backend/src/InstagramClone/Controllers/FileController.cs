@@ -6,7 +6,7 @@ namespace InstagramClone.Controllers
 {
 	[Route("[controller]")]
 	[ApiController]
-	public class FileController(IConfiguration configuration, IFileService fileService) : ControllerBase
+	public class FileController(IFileService fileService) : ControllerBase
 	{
 		private readonly IFileService _fileService = fileService;
 
