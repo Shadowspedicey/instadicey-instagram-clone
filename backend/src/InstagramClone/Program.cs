@@ -28,7 +28,10 @@ builder.Services.AddSingleton(jwtValidationParameters);
 builder.Services.AddProblemDetails();
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
-builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("Main")));
+builder.Services.AddDbContext<AppDbContext>(options => 
+	options
+		.UseSqlServer(builder.Configuration.GetConnectionString("Main"))
+		.UseLazyLoadingProxies());
 builder.Services.AddAuthentication("Bearer")
 	.AddJwtBearer(options =>
 	{
