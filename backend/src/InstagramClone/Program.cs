@@ -3,7 +3,6 @@ using InstagramClone.Data;
 using InstagramClone.Data.Entities;
 using InstagramClone.Interfaces;
 using InstagramClone.Services;
-using InstagramClone.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -26,7 +25,8 @@ var jwtValidationParameters = new TokenValidationParameters
 builder.Services.AddSingleton(jwtValidationParameters);
 
 builder.Services.AddProblemDetails();
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+	.AddJsonOptions(options => options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles);
 builder.Services.AddOpenApi();
 builder.Services.AddDbContext<AppDbContext>(options => 
 	options
@@ -67,6 +67,7 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddTransient<IEmailSender, EmailSender>();
 builder.Services.AddScoped<IPostsService, PostsService>();
 builder.Services.AddSingleton<IFileService, FileService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 // Authorization handlers
 builder.Services.AddSingleton<IAuthorizationHandler, IsPostOwnerHandler>();
