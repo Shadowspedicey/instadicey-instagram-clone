@@ -14,6 +14,6 @@ namespace InstagramClone.Data.Entities
 		public virtual required User User { get; set; }
 		public virtual required Post Post { get; set; }
 		public virtual ICollection<User> Likes { get; set; } = [];
-		public required DateTime CreatedAt { get; set; }
+		public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 	}
 }

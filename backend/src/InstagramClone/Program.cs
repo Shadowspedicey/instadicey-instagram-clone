@@ -68,6 +68,7 @@ builder.Services.AddTransient<IEmailSender, EmailSender>();
 builder.Services.AddScoped<IPostsService, PostsService>();
 builder.Services.AddSingleton<IFileService, FileService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ICommentService, CommentService>();
 
 // Authorization handlers
 builder.Services.AddSingleton<IAuthorizationHandler, IsPostOwnerHandler>();

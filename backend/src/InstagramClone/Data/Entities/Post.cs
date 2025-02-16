@@ -1,11 +1,14 @@
-﻿using InstagramClone.DTOs.Posts;
+﻿using FluentResults;
+using InstagramClone.DTOs.Posts;
 using InstagramClone.DTOs.Profile;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Runtime.Serialization;
 
 namespace InstagramClone.Data.Entities
 {
-	public class Post
+	public class Post : ICommentable
 	{
 		[Key]
 		[StringLength(26)]
@@ -17,6 +20,10 @@ namespace InstagramClone.Data.Entities
 		public virtual ICollection<Comment> Comments { get; set; } = [];
 		public virtual ICollection<User> Likes { get; set; } = [];
 		public required DateTime CreatedAt { get; set; }
+
+		public void AddComment(Comment comment) => Comments.Add(comment);
+		[IgnoreDataMember]
+		public ICollection<Comment> SortedComments => [.. Comments.OrderByDescending(x => x.CreatedAt)];
 
 		public PostGetDTO GetDTO(string fileDownloadEndpoint)
 		{
