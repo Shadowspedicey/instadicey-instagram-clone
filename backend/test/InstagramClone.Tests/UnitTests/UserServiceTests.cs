@@ -409,7 +409,7 @@ namespace InstagramClone.Tests.UnitTests
 			await _dbContext.Entry(_user).ReloadAsync();
 
 			Assert.True(result.IsSuccess);
-			Assert.Contains(_user.RecentSearches, u => u.UserName == otherUser.UserName);
+			Assert.Contains(_user.RecentSearches, s => s.SearchedUser.UserName == otherUser.UserName);
 		}
 
 		[Fact]
@@ -427,7 +427,7 @@ namespace InstagramClone.Tests.UnitTests
 		public async Task AddToRecentSearches_ShouldNotAddUserAgain_WhenAlreadyInList()
 		{
 			User otherUser = await AddAnotherUser();
-			_user.RecentSearches.Add(otherUser);
+			_dbContext.UserSearches.Add(new() { User = _user, SearchedUser = otherUser });
 			await _dbContext.SaveChangesAsync();
 			UserService userService = new(_dbContext, null!, null!);
 
@@ -442,24 +442,40 @@ namespace InstagramClone.Tests.UnitTests
 		public async Task AddToRecentSearches_ShouldPutUserAtStartOfList_WhenAlreadyInListAndWasSearchedBeforeAnotherUser()
 		{
 			User otherUser = await AddAnotherUser();
-			_user.RecentSearches.Add(Mock.Of<User>());
-			_user.RecentSearches.Add(otherUser);
+			User otherUser2 = new()
+			{
+				Email = "anotherexample2@domain.com",
+				UserName = "anotheruser2",
+				NormalizedUserName = "ANOTHERUSER2",
+				IsVerified = false,
+				LastLogin = DateTime.Now,
+				RecentSearches = [],
+				LikedPosts = [],
+				Following = [],
+				Followers = [],
+				CreatedAt = DateTime.Now,
+			};
+			await _dbContext.AddAsync(otherUser2);
 			await _dbContext.SaveChangesAsync();
 			UserService userService = new(_dbContext, null!, null!);
 
+			await userService.AddToRecentSearches(_claimsPrincipal, otherUser.UserName);
+			await userService.AddToRecentSearches(_claimsPrincipal, otherUser2.UserName);
+			await _dbContext.Entry(_user).ReloadAsync();
+			Assert.NotEqual(otherUser.UserName, _user.RecentSearches.OrderByDescending(us => us.SearchedAt).First().SearchedUser.UserName);
 			var result = await userService.AddToRecentSearches(_claimsPrincipal, otherUser.UserName!);
 			await _dbContext.Entry(_user).ReloadAsync();
 
 			Assert.True(result.IsSuccess);
 			Assert.Equal(2, _user.RecentSearches.Count);
-			Assert.Equal(otherUser.UserName, _user.RecentSearches.First().UserName);
+			Assert.Equal(otherUser.UserName, _user.RecentSearches.OrderByDescending(us => us.SearchedAt).First().SearchedUser.UserName);
 		}
 
 		[Fact]
 		public async Task RemoveFromRecentSearches_ShouldReturnSuccess_WhenSearchedUserExists()
 		{
 			User otherUser = await AddAnotherUser();
-			_user.RecentSearches.Add(otherUser);
+			_user.RecentSearches.Add(new() { User = _user, SearchedUser = otherUser });
 			await _dbContext.SaveChangesAsync();
 			UserService userService = new(_dbContext, null!, null!);
 
@@ -507,7 +523,7 @@ namespace InstagramClone.Tests.UnitTests
 		public async Task ClearRecentSearches_ShouldReturnSuccess_IfListHasOneSearch()
 		{
 			User otherUser = await AddAnotherUser();
-			_user.RecentSearches.Add(otherUser);
+			_user.RecentSearches.Add(new() { User = _user, SearchedUser = otherUser });
 			await _dbContext.SaveChangesAsync();
 			UserService userService = new(_dbContext, null!, null!);
 
@@ -538,7 +554,7 @@ namespace InstagramClone.Tests.UnitTests
 					LastLogin = DateTime.Now,
 				};
 				await _dbContext.Users.AddAsync(u);
-				_user.RecentSearches.Add(u);
+				_user.RecentSearches.Add(new() { User = _user, SearchedUser = u });
 			}
 			await _dbContext.SaveChangesAsync();
 			UserService userService = new(_dbContext, null!, null!);
@@ -548,6 +564,36 @@ namespace InstagramClone.Tests.UnitTests
 
 			Assert.True(result.IsSuccess);
 			Assert.Empty(_user.RecentSearches);
+		}
+
+		[Fact]
+		public async Task GetRecentSearches_ShouldReturnSuccess()
+		{
+			User otherUser = await AddAnotherUser();
+			User otherUser2 = new()
+			{
+				Email = "anotherexample2@domain.com",
+				UserName = "anotheruser2",
+				NormalizedUserName = "ANOTHERUSER2",
+				IsVerified = false,
+				LastLogin = DateTime.Now,
+				RecentSearches = [],
+				LikedPosts = [],
+				Following = [],
+				Followers = [],
+				CreatedAt = DateTime.Now,
+			};
+			await _dbContext.AddAsync(otherUser2);
+			await _dbContext.SaveChangesAsync();
+			UserService userService = new(_dbContext, null!, null!);
+			await userService.AddToRecentSearches(_claimsPrincipal, otherUser.UserName);
+			await userService.AddToRecentSearches(_claimsPrincipal, otherUser2.UserName);
+			await userService.AddToRecentSearches(_claimsPrincipal, otherUser.UserName);
+
+			var result = await userService.GetRecentSearches(_claimsPrincipal);
+			await _dbContext.Entry(_user).ReloadAsync();
+
+			Assert.Equal(otherUser.UserName, _user.RecentSearches.First().SearchedUser.UserName);
 		}
 	}
 }

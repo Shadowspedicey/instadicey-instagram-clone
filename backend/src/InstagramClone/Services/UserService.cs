@@ -6,6 +6,7 @@ using InstagramClone.Interfaces;
 using InstagramClone.Utils;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Collections;
 using System.Security.Claims;
 
 namespace InstagramClone.Services
@@ -98,9 +99,12 @@ namespace InstagramClone.Services
 			if (searchedUser is null)
 				return Result.Fail(new CodedError(ErrorCode.NotFound, $"User '{searchedUsername}' was not found"));
 
-			currentUser.RecentSearches.Remove(searchedUser);
+			UserSearch? userSearchResult = currentUser.RecentSearches.FirstOrDefault(us => us.SearchedUser.UserName == searchedUsername);
 
-			currentUser.RecentSearches = currentUser.RecentSearches.Prepend(searchedUser).ToList();
+			if (userSearchResult is null)
+				currentUser.RecentSearches.Add(new UserSearch { User = currentUser, SearchedUser = searchedUser, SearchedAt = DateTime.Now });
+			else userSearchResult.SearchedAt = DateTime.Now;
+
 			await _dbContext.SaveChangesAsync();
 			return Result.Ok();
 		}
@@ -111,10 +115,12 @@ namespace InstagramClone.Services
 			if (removedUser is null)
 				return Result.Fail(new CodedError(ErrorCode.NotFound, $"User '{removedUsername}' was not found"));
 
-			if (!currentUser.RecentSearches.Remove(removedUser))
+			UserSearch? userSearchResult = currentUser.RecentSearches.FirstOrDefault(us => us.SearchedUser.UserName == removedUsername);
+			if (userSearchResult is null)
 				return Result.Fail(new CodedError(ErrorCode.Duplicate, $"User '{removedUsername}' doesn't exist in recent searches."));
 			else
 			{
+				currentUser.RecentSearches.Remove(userSearchResult);
 				await _dbContext.SaveChangesAsync();
 				return Result.Ok();
 			}
@@ -126,6 +132,12 @@ namespace InstagramClone.Services
 			currentUser.RecentSearches.Clear();
 			await _dbContext.SaveChangesAsync();
 			return Result.Ok();
+		}
+
+		public async Task<Result<IEnumerable<User>>> GetRecentSearches(ClaimsPrincipal currentUserPrincipal)
+		{
+			User currentUser = (await _dbContext.Users.FindAsync(currentUserPrincipal.FindFirstValue("sub")))!;
+			return Result.Ok(currentUser.RecentSearches.OrderByDescending(us => us.SearchedAt).Select(us => us.SearchedUser));
 		}
 
 
