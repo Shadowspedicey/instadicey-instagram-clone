@@ -3,6 +3,7 @@ using InstagramClone.Interfaces;
 using InstagramClone.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using InstagramClone.Filters;
 
 namespace InstagramClone.Controllers
 {
@@ -23,6 +24,7 @@ namespace InstagramClone.Controllers
 			return result.IsSuccess ? Ok(result.Value.GetDTO(DownloadFileEndpoint)) : this.AppropriateResponseBasedOnResult(result);
 		}
 
+		[EditDTOUsernameLowercaseFilter]
 		[HttpPost("edit")]
 		public async Task<IActionResult> Edit(UserEditDTO userData, CancellationToken cancellationToken)
 		{

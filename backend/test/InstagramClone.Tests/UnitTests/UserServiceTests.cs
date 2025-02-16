@@ -115,7 +115,7 @@ namespace InstagramClone.Tests.UnitTests
 			await AddAnotherUser();
 			UserService userService = new(_dbContext, _userManager, null!);
 
-			var result = await userService.ChangeUsername(_user, "NewUsername");
+			var result = await userService.ChangeUsername(_user, "newusername");
 			await _dbContext.Entry(_user).ReloadAsync();
 
 			Assert.True(result.IsSuccess);
@@ -124,8 +124,7 @@ namespace InstagramClone.Tests.UnitTests
 		}
 
 		[InlineData("anotheruser")]
-		// Makes sure it's case in-sensitive
-		[InlineData("AnotherUser")]
+		//[InlineData("AnotherUser")]–Handled in controller filter now
 		[Theory]
 		public async Task ChangeUsername_ShouldReturnResultFailedWithErrorCodeDuplicate_WhenUsernameIsAlreadyTaken(string newUsername)
 		{

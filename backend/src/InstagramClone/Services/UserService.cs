@@ -47,8 +47,6 @@ namespace InstagramClone.Services
 		}
 		public async Task<Result> ChangeUsername(User currentUser, string newUsername)
 		{
-			// TODO: Move to controller filter
-			newUsername = newUsername.ToLower();
 			bool isDuplicate = await _dbContext.Users.AnyAsync(u => u.UserName == newUsername);
 			if (isDuplicate)
 				return Result.Fail(new CodedError(ErrorCode.Duplicate, $"The username: {newUsername} already exists."));
