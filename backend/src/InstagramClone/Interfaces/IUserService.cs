@@ -19,6 +19,7 @@ namespace InstagramClone.Interfaces
 
 		public Task<Result> SavePost(ClaimsPrincipal currentUserPrincipal, string postID);
 		public Task<Result> UnsavePost(ClaimsPrincipal currentUserPrincipal, string postID);
+		public Task<Result<IList<Post>>> GetSavedPosts(ClaimsPrincipal currentUserPrincipal);
 
 		public Task<Result> AddToRecentSearches(ClaimsPrincipal currentUserPrincipal, string searchedUsername);
 		public Task<Result> RemoveFromRecentSearches(ClaimsPrincipal currentUserPrincipal, string removedUsername);

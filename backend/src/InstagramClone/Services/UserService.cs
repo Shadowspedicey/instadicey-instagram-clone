@@ -6,7 +6,6 @@ using InstagramClone.Interfaces;
 using InstagramClone.Utils;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using System.Collections;
 using System.Security.Claims;
 
 namespace InstagramClone.Services
@@ -203,6 +202,15 @@ namespace InstagramClone.Services
 			currentUser.SavedPosts.Remove(post);
 			await _dbContext.SaveChangesAsync();
 			return Result.Ok();
+		}
+
+		public async Task<Result<IList<Post>>> GetSavedPosts(ClaimsPrincipal currentUserPrincipal)
+		{
+			List<string> savedPostsID = await _dbContext.Database.SqlQuery<string>($"SELECT * FROM PostsSaves WHERE UserID = {currentUserPrincipal.FindFirstValue("sub")} ORDER BY SavedAt DESC").ToListAsync();
+			IList<Post> savedPosts = await _dbContext.Posts.Where(p => savedPostsID.Contains(p.ID)).ToListAsync();
+			var postsDictionary = savedPosts.ToDictionary(p => p.ID);
+			IList<Post> savedPostsOrdered = savedPostsID.Select(id => postsDictionary[id]).ToList();
+			return Result.Ok(savedPostsOrdered);
 		}
 	}
 }
