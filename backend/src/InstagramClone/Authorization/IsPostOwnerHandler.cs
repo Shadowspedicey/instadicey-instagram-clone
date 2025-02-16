@@ -16,4 +16,17 @@ namespace InstagramClone.Authorization
 			return Task.CompletedTask;
 		}
 	}
+
+	public class IsCommentsPostOwnerHandler : AuthorizationHandler<IsCommentOrPostOwnerRequirement, Comment>
+	{
+		protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, IsCommentOrPostOwnerRequirement requirement, Comment resource)
+		{
+			string? userID = context.User.FindFirstValue("sub");
+			if (userID is null) context.Fail();
+			if (resource.Post.User.Id == userID)
+				context.Succeed(requirement);
+
+			return Task.CompletedTask;
+		}
+	}
 }

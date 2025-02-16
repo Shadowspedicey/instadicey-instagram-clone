@@ -44,6 +44,10 @@ builder.Services.AddAuthorization(options =>
 	{
 		policyBuilder.AddRequirements(new IsPostOwnerRequirement());
 	});
+	options.AddPolicy("CanDeleteComment", policyBuilder =>
+	{
+
+});
 });
 builder.Services.AddIdentityCore<User>(options =>
 {
@@ -72,6 +76,8 @@ builder.Services.AddScoped<ICommentService, CommentService>();
 
 // Authorization handlers
 builder.Services.AddSingleton<IAuthorizationHandler, IsPostOwnerHandler>();
+builder.Services.AddSingleton<IAuthorizationHandler, IsCommentsPostOwnerHandler>();
+builder.Services.AddSingleton<IAuthorizationHandler, IsCommentOwnerHandler>();
 
 var app = builder.Build();
 

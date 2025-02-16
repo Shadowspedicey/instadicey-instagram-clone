@@ -7,6 +7,7 @@ namespace InstagramClone.Data
 	public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbContext<User>(options)
 	{
 		public DbSet<Post> Posts { get; set; }
+		public DbSet<Comment> Comments { get; set; }
 		public DbSet<UserSearch> UserSearches { get; set; }
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
