@@ -49,6 +49,7 @@ namespace InstagramClone.Data
 							.OnDelete(DeleteBehavior.ClientCascade);
 						j.Property("SavedPostsID").HasColumnName("SavedPostID");
 						j.Property("User1Id").HasColumnName("UserID");
+						j.Property<DateTime>("SavedAt").HasDefaultValueSql(Database.ProviderName == "Microsoft.EntityFrameworkCore.SqlServer" ? "GETUTCDATE()" : "CURRENT_TIMESTAMP");
 					});
 				U.HasMany<Comment>()
 					.WithMany(c => c.Likes)
@@ -66,15 +67,6 @@ namespace InstagramClone.Data
 						e.Property("FollowersId").HasColumnName("UserID");
 						e.Property("FollowingId").HasColumnName("FollowedUserID");
 					});
-				
-				//U.HasMany(u1 => u1.RecentSearches)
-				//	.WithMany()
-				//	.UsingEntity(jt =>
-				//	{
-				//		jt.ToTable("UserSearches");
-				//		jt.Property("RecentSearchesId").HasColumnName("SearchedUserID");
-				//		jt.Property("UserId").HasColumnName("UserID");
-				//	});
 			});
 
 			modelBuilder.Entity<UserSearch>(US =>
