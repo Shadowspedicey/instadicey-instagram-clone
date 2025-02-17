@@ -91,7 +91,7 @@ namespace InstagramClone.Services
 			return result;
 		}
 
-		public string GenerateToken(User? user = null)
+		public string GenerateToken(string downloadFileEndpoint = "", User? user = null)
 		{
 			var securityKey = new SymmetricSecurityKey(Convert.FromBase64String(_configuration["Authentication:Schemes:Bearer:SigningKeys:1:Value"]));
 			var signingCredentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
@@ -106,6 +106,7 @@ namespace InstagramClone.Services
 					(
 						new("sub", user.Id),
 						new("email", user.Email, ClaimValueTypes.Email),
+						new("profilePic", $"{downloadFileEndpoint}{user.ProfilePic}", ClaimTypes.Uri),
 						new("username", user.UserName),
 						new("isVerified", user.IsVerified.ToString(), ClaimValueTypes.Boolean)
 					);
