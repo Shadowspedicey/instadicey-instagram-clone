@@ -16,7 +16,7 @@ namespace InstagramClone.Controllers
 		{
 			var result = await _authService.RegisterUser(userRegisterDTO);
 			if (!result.Succeeded)
-				return this.ProblemWithErrors(statusCode: 400, errors: result.Errors);
+				return this.ProblemWithErrors(statusCode: 400, detail: result.Errors.First().Description, errors: result.Errors);
 			else
 				return Created();
 		}
@@ -28,9 +28,9 @@ namespace InstagramClone.Controllers
 			if (!result.Succeeded)
 			{
 				if (result.Errors.Any(e => e.Code == "UserNotFound"))
-					return NotFound();
+					return this.ProblemWithErrors(statusCode: 404, detail: "Email is invalid or user doesn't exist.", errors: new[] {new CodedError(ErrorCode.NotFound, "Email is invalid or user doesn't exist..").Metadata });
 				else
-					return this.ProblemWithErrors(statusCode: 400, errors: result.Errors);
+					return this.ProblemWithErrors(statusCode: 400, detail: result.Errors.First().Description, errors: result.Errors);
 			}
 			else
 				return NoContent();
@@ -43,9 +43,9 @@ namespace InstagramClone.Controllers
 			if (!result.Succeeded)
 			{
 				if (result.Errors.Any(e => e.Code == "UserNotFound"))
-					return NotFound();
+					return this.ProblemWithErrors(statusCode: 404, detail: "Email is invalid or user doesn't exist.", errors: new[] {new CodedError(ErrorCode.NotFound, "Email is invalid or user doesn't exist.").Metadata });
 				else
-					return this.ProblemWithErrors(statusCode: 400, errors: result.Errors);
+					return this.ProblemWithErrors(statusCode: 400, detail: result.Errors.First().Description, errors: result.Errors);
 			}
 			else
 				return Ok();
@@ -58,11 +58,11 @@ namespace InstagramClone.Controllers
 			if (!result.Succeeded)
 			{
 				if (result.Errors.Any(e => e.Code == "UserNotFound"))
-					return NotFound();
+					return this.ProblemWithErrors(statusCode: 404, detail: result.Errors.First().Description, errors: result.Errors);
 				else if (result.Errors.Any(e => e.Code == "EmailNotVerified"))
-					return this.ProblemWithErrors(statusCode: 401, errors: result.Errors);
+					return this.ProblemWithErrors(statusCode: 401, detail: result.Errors.First().Description, errors: result.Errors);
 				else
-					return this.ProblemWithErrors(statusCode: 400, errors: result.Errors);
+					return this.ProblemWithErrors(statusCode: 400, detail: result.Errors.First().Description, errors: result.Errors);
 			}
 
 			var token = _authService.GenerateToken(user);
