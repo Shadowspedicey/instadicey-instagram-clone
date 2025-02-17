@@ -46,7 +46,7 @@ builder.Services.AddAuthorization(options =>
 	});
 	options.AddPolicy("CanDeleteComment", policyBuilder =>
 	{
-
+		policyBuilder.AddRequirements(new IsCommentOrPostOwnerRequirement());
 });
 });
 builder.Services.AddIdentityCore<User>(options =>
