@@ -3,12 +3,15 @@ using InstagramClone.Data;
 using InstagramClone.Data.Entities;
 using InstagramClone.Interfaces;
 using InstagramClone.Services;
+using InstagramClone.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Configuration["FrontendOrigin"] = Helpers.GetHostFromURL(builder.Configuration["Frontend"] ?? throw new ArgumentNullException("FrontendOrigin", "Frontend origin has to be set in appsettings.json for CORS to be configured."));
 
 var signingKeys = builder.Configuration.GetRequiredSection("Authentication:Schemes:Bearer:SigningKeys").GetChildren().ToList();
 var jwtValidationParameters = new TokenValidationParameters
@@ -67,6 +70,11 @@ builder.Services.AddIdentityCore<User>(options =>
 })
 	.AddEntityFrameworkStores<AppDbContext>()
 	.AddDefaultTokenProviders();
+builder.Services.AddCors(corsBuilder => corsBuilder.AddPolicy("Default", policy =>
+{
+	string frontendOrigin = builder.Configuration["FrontendOrigin"]!;
+	policy.WithOrigins(frontendOrigin).WithMethods("GET", "POST").WithHeaders("Content-Type");
+}));
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddTransient<IEmailSender, EmailSender>();
 builder.Services.AddScoped<IPostsService, PostsService>();
@@ -88,6 +96,7 @@ if (app.Environment.IsDevelopment())
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseHttpsRedirection();
+app.UseCors("Default");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

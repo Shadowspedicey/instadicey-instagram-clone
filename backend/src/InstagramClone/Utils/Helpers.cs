@@ -12,6 +12,12 @@ namespace InstagramClone.Utils
 			.AddUserSecrets<Program>()
 			.Build();
 
+		public static string GetHostFromURL(string url)
+		{
+			Uri uri = new Uri(url);
+			return $"{uri.Scheme}://{uri.Host}:{uri.Port}";
+		}
+
 		public static class Files
 		{
 			public static async Task<string> SavePost(
