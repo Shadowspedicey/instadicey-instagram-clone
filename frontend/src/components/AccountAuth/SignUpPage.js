@@ -6,6 +6,9 @@ import { setUser } from "../../state/actions/currentUser";
 import ErrorMsg from "./ErrorMsg";
 import nameLogo from "../../assets/namelogo.png";
 import emailVerificationIcon from "../../assets/misc/email-verification.png";
+import { backend } from "../../config";
+import { ping } from "../../helpers";
+import { setSnackbar } from "../../state/actions/snackbar";
 
 const SignUpPage = () =>
 {
@@ -47,8 +50,16 @@ const SignUpPage = () =>
 
 	const handleSubmit = async  e =>
 	{
+		if (!(await ping()))
+		{
+			setErrorMsg("Server is down.");
+			dispatch(setSnackbar("Server is down.", "error"));
+			return;
+		}
+
 		e.preventDefault();
 		if (!isInfoValid) return;
+		setErrorMsg(null);
 		
 		const email = emailRef.current.value.toLowerCase();
 		const realName = realNameRef.current.value;
@@ -59,35 +70,41 @@ const SignUpPage = () =>
 		{
 			dispatch(startLoading());
 
-			const info =
-			{
-				realName,
-				username,
-				profilePic: "https://firebasestorage.googleapis.com/v0/b/instadicey.appspot.com/o/default%2FprofilePic.jpg?alt=media&token=3ac835a3-016e-470a-b7b3-f898d82cdbde",
-				defaultProfilePic: true,
-				bio: "",
-				saved: [],
-				recentSearches: {},
-				// uid
-				// timestamp
-			};
-			// Create user in DB with email and password, and create an info entry with the above data
-			setErrorMsg(null);
+			const info = { email, username, realName, password };
+			const result = await fetch(`${backend}/auth/register`, {
+				method: "POST",
+				body: JSON.stringify(info),
+				headers: {
+					"Content-Type": "application/json"
+				},
+				mode: "cors"
+			});
 			
-			// TODO: Send email verification
+			if (!result.ok) {
+				const resultBody = await result.json();
+				throw new Error(resultBody.detail, {cause: resultBody.errors});
+			}
 			setEmailVerificationTime(true);
-			runEmailVerification(info);
-
-			dispatch(stopLoading());
+			//runEmailVerification(info);
 		} catch (err)
 		{
-			const errorCode = err.code;
-			console.error("Error with signup", err);
-			// TODO: if (errorCode === "auth/email-already-in-use")
-			// 	setErrorMsg("Email already in use");
-			dispatch(stopLoading());
+			console.log(err);
+			const errors = err.cause ?? [];
+			const errorMessages = [];
+			for (var i = 0; i < errors.length; i++)
+				if (errors[i].code === "DuplicateUserName")
+					errorMessages.push("Username already in use.");
+				else if (errors[i].code === "DuplicateEmail")
+					errorMessages.push("Email already in use.");
+			errors.length === 0
+				? setErrorMsg("An error has occurred.")
+				: setErrorMsg(errorMessages.join("\n"));
+
 		}
+		dispatch(stopLoading());
 	};
+
+	useEffect(() => dispatch(stopLoading()), [dispatch]);
 
 	// Runs after checking user info on sign up
 	const runEmailVerification = (info) =>
@@ -102,7 +119,6 @@ const SignUpPage = () =>
 			// };
 		}, 5000));
 	};
-	// useEffect(() => /* TODO: Sign out */, []);
 
 	if (!emailVerificationTime)
 		return(
