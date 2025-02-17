@@ -21,7 +21,7 @@ namespace InstagramClone.Data.Entities
 
 		public void AddComment(Comment comment) => Comments.Add(comment);
 		[IgnoreDataMember]
-		public ICollection<Comment> SortedComments => [.. Comments.OrderByDescending(x => x.CreatedAt)];
+		public IOrderedEnumerable<Comment> SortedComments => Comments.OrderByDescending(x => x.CreatedAt);
 
 		public PostViewDTO ToDTO(string fileDownloadEndpoint)
 		{

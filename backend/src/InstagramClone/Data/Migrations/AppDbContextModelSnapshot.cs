@@ -69,7 +69,7 @@ namespace InstagramClone.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Comments");
+                    b.ToTable("Comments", (string)null);
                 });
 
             modelBuilder.Entity("InstagramClone.Data.Entities.Post", b =>
@@ -97,7 +97,7 @@ namespace InstagramClone.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Posts");
+                    b.ToTable("Posts", (string)null);
                 });
 
             modelBuilder.Entity("InstagramClone.Data.Entities.User", b =>
@@ -205,7 +205,7 @@ namespace InstagramClone.Data.Migrations
 
                     b.HasIndex("SearchedUserID");
 
-                    b.ToTable("UserSearches");
+                    b.ToTable("UserSearches", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>

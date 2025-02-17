@@ -79,6 +79,8 @@ namespace InstagramClone.Data
 					.OnDelete(DeleteBehavior.ClientCascade);
 			});
 
+			modelBuilder.Entity<Post>().Ignore(p => p.SortedComments);
+
 			modelBuilder.Entity<Comment>(C =>
 			{
 				C.HasOne(c => c.User)
