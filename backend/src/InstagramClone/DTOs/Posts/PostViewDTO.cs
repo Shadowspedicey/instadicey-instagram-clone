@@ -2,7 +2,7 @@
 
 namespace InstagramClone.DTOs.Posts
 {
-	public class PostGetDTO
+	public class PostViewDTO
 	{
 		public required string ID { get; set; }
 		public string? Caption { get; set; }

@@ -21,7 +21,7 @@ namespace InstagramClone.Controllers
 		{
 			var result = await _userService.GetUser(username);
 
-			return result.IsSuccess ? Ok(result.Value.GetDTO(DownloadFileEndpoint)) : this.AppropriateResponseBasedOnResult(result);
+			return result.IsSuccess ? Ok(result.Value.ToDTO(DownloadFileEndpoint)) : this.AppropriateResponseBasedOnResult(result);
 		}
 
 		[EditDTOUsernameLowercaseFilter]
@@ -73,7 +73,7 @@ namespace InstagramClone.Controllers
 		{
 			var result = await _userService.GetSavedPosts(User);
 
-			return result.IsSuccess ? Ok(result.Value.Select(p => p.GetDTO(DownloadFileEndpoint))) : this.AppropriateResponseBasedOnResult(result);
+			return result.IsSuccess ? Ok(result.Value.Select(p => p.ToDTO(DownloadFileEndpoint))) : this.AppropriateResponseBasedOnResult(result);
 		}
 
 
@@ -106,7 +106,7 @@ namespace InstagramClone.Controllers
 		{
 			var result = await _userService.GetRecentSearches(User);
 
-			return result.IsSuccess ? Ok(result.ValueOrDefault.Select(u => u.GetMinimalDTO(DownloadFileEndpoint))) : this.AppropriateResponseBasedOnResult(result);
+			return result.IsSuccess ? Ok(result.ValueOrDefault.Select(u => u.ToMinimalDTO(DownloadFileEndpoint))) : this.AppropriateResponseBasedOnResult(result);
 		}
 	}
 }

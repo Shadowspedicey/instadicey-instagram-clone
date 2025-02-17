@@ -1,4 +1,6 @@
-﻿namespace InstagramClone.DTOs.Profile
+﻿using InstagramClone.DTOs.Posts;
+
+namespace InstagramClone.DTOs.Profile
 {
 	public class UserProfileDTO
 	{
@@ -10,6 +12,6 @@
 		public virtual required ICollection<UserMinimalProfileDTO> Following { get; set; } = [];
 		public virtual required ICollection<UserMinimalProfileDTO> Followers { get; set; } = [];
 
-		public virtual ICollection<UserProfilePost> Posts { get; set; } = [];
+		public virtual ICollection<PostMinimalViewDTO> Posts { get; set; } = [];
 	}
 }

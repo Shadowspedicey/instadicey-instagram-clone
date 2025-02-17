@@ -1,6 +1,6 @@
-﻿namespace InstagramClone.DTOs.Profile
+﻿namespace InstagramClone.DTOs.Posts
 {
-	public class UserProfilePost
+	public class PostMinimalViewDTO
 	{
 		public required string ID { get; set; }
 		public required string Photo { get; set; }

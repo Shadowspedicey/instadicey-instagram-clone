@@ -23,18 +23,18 @@ namespace InstagramClone.Data.Entities
 		public virtual ICollection<Post> LikedPosts { get; set; } = [];
 		public virtual ICollection<Post> SavedPosts { get; set; } = [];
 
-		public UserProfileDTO GetDTO(string downloadEndpoint) => new()
+		public UserProfileDTO ToDTO(string downloadEndpoint) => new()
 		{
 			Username = UserName!,
 			RealName = RealName,
 			Bio = Bio,
 			ProfilePic = $"{downloadEndpoint}{ProfilePic}",
 			IsVerified = IsVerified,
-			Following = Following.Select(u => u.GetMinimalDTO(downloadEndpoint)).ToList(),
-			Followers = Followers.Select(u => u.GetMinimalDTO(downloadEndpoint)).ToList(),
-			Posts = Posts.Select(p => p.GetMinimalDTO(downloadEndpoint)).ToList(),
+			Following = Following.Select(u => u.ToMinimalDTO(downloadEndpoint)).ToList(),
+			Followers = Followers.Select(u => u.ToMinimalDTO(downloadEndpoint)).ToList(),
+			Posts = Posts.Select(p => p.ToMinimalDTO(downloadEndpoint)).ToList(),
 		};
 
-		public UserMinimalProfileDTO GetMinimalDTO(string downloadEndpoint) => new(UserName!, ProfilePic!, downloadEndpoint);
+		public UserMinimalProfileDTO ToMinimalDTO(string downloadEndpoint) => new(UserName!, ProfilePic!, downloadEndpoint);
 	}
 }

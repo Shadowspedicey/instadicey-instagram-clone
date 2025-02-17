@@ -1,9 +1,7 @@
-﻿using FluentResults;
-using InstagramClone.DTOs.Posts;
+﻿using InstagramClone.DTOs.Posts;
 using InstagramClone.DTOs.Profile;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Runtime.Serialization;
 
 namespace InstagramClone.Data.Entities
@@ -25,9 +23,9 @@ namespace InstagramClone.Data.Entities
 		[IgnoreDataMember]
 		public ICollection<Comment> SortedComments => [.. Comments.OrderByDescending(x => x.CreatedAt)];
 
-		public PostGetDTO GetDTO(string fileDownloadEndpoint)
+		public PostViewDTO ToDTO(string fileDownloadEndpoint)
 		{
-			return new PostGetDTO
+			return new PostViewDTO
 			{
 				ID = ID,
 				Caption = Caption,
@@ -36,7 +34,7 @@ namespace InstagramClone.Data.Entities
 				User = new UserMinimalProfileDTO(User.UserName!, User.ProfilePic!, fileDownloadEndpoint)
 			};
 		}
-		public UserProfilePost GetMinimalDTO(string fileDownloadEndpoint) => new()
+		public PostMinimalViewDTO ToMinimalDTO(string fileDownloadEndpoint) => new()
 		{
 			ID = ID,
 			Photo = $"{fileDownloadEndpoint}{Photo}",
