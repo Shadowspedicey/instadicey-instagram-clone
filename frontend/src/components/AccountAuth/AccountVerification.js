@@ -5,12 +5,19 @@ import { startLoading, stopLoading } from "../../state/actions/isLoading";
 import Logo from "../../assets/logo.png";
 import greenCheckmark from "../../assets/misc/green-checkmark.png";
 import redX from "../../assets/misc/red-x.png";
+import { backend } from "../../config";
+import { setSnackbar } from "../../state/actions/snackbar";
+import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 
 const AccountVerification = () =>
 {
 	const dispatch = useDispatch();
-	const [mode, setMode] = useState("");
-	const [actionCode, setActionCode] = useState("");
+	const {search} = useLocation();
+	const params = new URLSearchParams(search);
+	const mode = params.get("mode");
+	const email = params.get("user");
+	const token = params.get("token");
+	const [errorMsg, setErrorMsg] = useState("");
 	const [status, setStatus] = useState({});
 
 	const passwordRef = useRef();
@@ -25,14 +32,39 @@ const AccountVerification = () =>
 	{
 		try
 		{
-			// TODO: Verify the email in the server with the appropriate code provided in the route/query
+			if (!email || !token)
+				throw new Error("Email or token missing.");
+
+			console.log(encodeURIComponent(token));
+			const result = await fetch(`${backend}/auth/confirm-email?encodedEmail=${encodeURIComponent(email)}&code=${encodeURIComponent(token)}`, {method: "POST"});
+			if (!result.ok) {
+				const resultJSON = await result.json();
+				throw new Error(resultJSON.detail, {cause: resultJSON.errors});
+			}
 			setStatus({
 				type: "email-verification",
 				ok: true,
 			});
 		} catch (err)
 		{
-			console.error(err);
+			if (err.message.includes("Failed to fetch"))
+				setErrorMsg("Server is down.");
+			else
+			{
+				const errors = err.cause;
+				console.log(err);
+				if (!email || !token)
+					setErrorMsg("Email or token missing.");
+				else if (errors.length)
+				{
+					if (errors.some(e => e.code === "NotFound"))
+						setErrorMsg(err.message);
+					else if (errors.some(e => e.code === "InvalidToken"))
+						setErrorMsg(err.message);
+				}
+				else
+					setErrorMsg("An error has occurred.");	
+			}
 			setStatus({
 				type: "email-verification",
 				ok: false,
@@ -86,12 +118,12 @@ const AccountVerification = () =>
 		dispatch(stopLoading());
 	};
 
-	const handleLink = () =>
+	const handleLink = async () =>
 	{
 		switch (mode)
 		{
 			case "verifyEmail":
-				handleVerifyEmail();
+				await handleVerifyEmail();
 				break;
 
 			case "resetPassword":
@@ -106,22 +138,12 @@ const AccountVerification = () =>
 	useEffect(() =>
 	{
 		dispatch(startLoading());
-		setMode(getParameterByName("mode"));
-		setActionCode(getParameterByName("oobCode"));
+		console.log(mode);
+		// setMode(getParameterByName("mode"));
+		// setEmail(getParameterByName("user"));
+		// setToken(getParameterByName("token"));
 		handleLink();
 	}, [mode]);
-
-	const getParameterByName = name =>
-	{
-		name = name.replace(/[[]/,"\\[").replace(/[\]]/,"\\]");
-		var regexS = "[\\?&]"+name+"=([^&#]*)";
-		var regex = new RegExp(regexS);
-		var results = regex.exec(window.location.href);
-		if (results == null)
-			return "";
-		else
-			return decodeURIComponent(results[1].replace(/\+/g, " "));
-	};
 
 
 	if (mode === "resetPassword" && !passwordResetDone && status.ok !== false)
@@ -172,7 +194,7 @@ const AccountVerification = () =>
 						? 
 						<div className="text-div">
 							<h1>An error has occured</h1>
-							<p>This email address is already verified or the link might have expired.</p>
+							<p>{errorMsg}</p>
 						</div>
 						: status.type === "password-reset"
 							?
