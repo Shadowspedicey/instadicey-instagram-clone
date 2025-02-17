@@ -73,6 +73,7 @@ builder.Services.AddScoped<IPostsService, PostsService>();
 builder.Services.AddSingleton<IFileService, FileService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
+builder.Services.AddScoped<ILikeService, LikeService>();
 
 // Authorization handlers
 builder.Services.AddSingleton<IAuthorizationHandler, IsPostOwnerHandler>();
