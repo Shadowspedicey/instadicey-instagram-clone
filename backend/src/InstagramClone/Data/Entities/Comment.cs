@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using InstagramClone.DTOs.Posts;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace InstagramClone.Data.Entities
@@ -15,5 +16,15 @@ namespace InstagramClone.Data.Entities
 		public virtual required Post Post { get; set; }
 		public virtual ICollection<User> Likes { get; set; } = [];
 		public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+		public CommentViewDTO ToDTO(string fileDownloadEndpoint) => new()
+		{
+			ID = ID,
+			Comment = Content,
+			User = User.ToMinimalDTO(fileDownloadEndpoint),
+			PostID = Post.ID,
+			Likes = Likes.Select(u => u.ToMinimalDTO(fileDownloadEndpoint)).ToList(),
+			CreatedAt = CreatedAt,
+		};
 	}
 }

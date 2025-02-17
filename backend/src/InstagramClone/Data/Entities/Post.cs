@@ -28,10 +28,11 @@ namespace InstagramClone.Data.Entities
 			return new PostViewDTO
 			{
 				ID = ID,
-				Caption = Caption,
 				Photo = $"{fileDownloadEndpoint}{Photo}",
-				CreatedAt = CreatedAt,
-				User = new UserMinimalProfileDTO(User.UserName!, User.ProfilePic!, fileDownloadEndpoint)
+				Caption = Caption,
+				Comments = SortedComments.Select(c => c.ToDTO(fileDownloadEndpoint)).ToList(),
+				User = new UserMinimalProfileDTO(User.UserName!, User.ProfilePic!, fileDownloadEndpoint),
+				CreatedAt = CreatedAt
 			};
 		}
 		public PostMinimalViewDTO ToMinimalDTO(string fileDownloadEndpoint) => new()
