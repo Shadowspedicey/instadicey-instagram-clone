@@ -22,7 +22,7 @@ namespace InstagramClone.Data
 				U.Property(u => u.IsVerified)
 					.HasDefaultValue(false);
 				U.Property(u => u.ProfilePic)
-					.HasDefaultValue("https://firebasestorage.googleapis.com/v0/b/instadicey.appspot.com/o/default%2FprofilePic.jpg?alt=media&token=3ac835a3-016e-470a-b7b3-f898d82cdbde");
+					.HasDefaultValue("jGLe0Lx39svW1MiJObFkD6w1S-gigSJuJ0WfcA0BpE4");
 				
 				U.HasMany(u => u.Posts)
 					.WithOne(p => p.User)
