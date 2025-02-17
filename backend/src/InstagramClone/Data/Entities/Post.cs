@@ -6,7 +6,7 @@ using System.Runtime.Serialization;
 
 namespace InstagramClone.Data.Entities
 {
-	public class Post : ICommentable
+	public class Post : ICommentable, ILikeable
 	{
 		[Key]
 		[StringLength(26)]
@@ -22,6 +22,9 @@ namespace InstagramClone.Data.Entities
 		public void AddComment(Comment comment) => Comments.Add(comment);
 		[IgnoreDataMember]
 		public IOrderedEnumerable<Comment> SortedComments => Comments.OrderByDescending(x => x.CreatedAt);
+
+		public void Like(User user) => Likes.Add(user);
+		public void Unlike(User user) => Likes.Remove(user);
 
 		public PostViewDTO ToDTO(string fileDownloadEndpoint)
 		{

@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace InstagramClone.Data.Entities
 {
 	[Table("Comments")]
-	public class Comment
+	public class Comment : ILikeable
 	{
 		[Key]
 		[StringLength(26)]
@@ -16,6 +16,9 @@ namespace InstagramClone.Data.Entities
 		public virtual required Post Post { get; set; }
 		public virtual ICollection<User> Likes { get; set; } = [];
 		public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+		public void Like(User user) => Likes.Add(user);
+		public void Unlike(User user) => Likes.Remove(user);
 
 		public CommentViewDTO ToDTO(string fileDownloadEndpoint) => new()
 		{
