@@ -2,7 +2,6 @@
 using InstagramClone.Interfaces;
 using SendGrid;
 using SendGrid.Helpers.Mail;
-using SendGrid.Helpers.Mail.Model;
 using System.Net;
 
 namespace InstagramClone.Services
@@ -10,15 +9,17 @@ namespace InstagramClone.Services
 	public class EmailSender : IEmailSender
 	{
 		private readonly SendGridClient _emailClient;
+		private readonly string _frontend;
 		public EmailSender(IConfiguration configuration)
 		{
 			var apiKey = configuration["SendGrid:Key"];
 			_emailClient = new SendGridClient(apiKey);
+			_frontend = configuration["Frontend"] ?? throw new ArgumentException("Frontend origin missing.");
 		}
 		public async Task SendAccountVerificationEmail(User user, string encodedToken)
 		{
 			var encodedEmail = WebUtility.UrlEncode(user.Email);
-			string verificationLink = $"https://shadowspedicey.github.io/instagram-clone-fullstack/accounts/verify?user={encodedEmail}&token={encodedToken}";
+			string verificationLink = $"{_frontend}/#/accounts/verify?mode=verifyEmail&user={encodedEmail}&token={encodedToken}";
 
 			SendGridMessage message = new()
 			{
