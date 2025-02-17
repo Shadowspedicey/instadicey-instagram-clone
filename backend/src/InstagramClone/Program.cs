@@ -75,6 +75,9 @@ builder.Services.AddCors(corsBuilder => corsBuilder.AddPolicy("Default", policy 
 	string frontendOrigin = builder.Configuration["FrontendOrigin"]!;
 	policy.WithOrigins(frontendOrigin).WithMethods("GET", "POST").WithHeaders("Content-Type");
 }));
+builder.Services.AddHealthChecks();
+
+// Services
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddTransient<IEmailSender, EmailSender>();
 builder.Services.AddScoped<IPostsService, PostsService>();
@@ -97,6 +100,7 @@ app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseHttpsRedirection();
 app.UseCors("Default");
+app.UseHealthChecks("/ping");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
