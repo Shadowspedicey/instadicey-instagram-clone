@@ -34,6 +34,7 @@ namespace InstagramClone.Data.Entities
 				Photo = $"{fileDownloadEndpoint}{Photo}",
 				Caption = Caption,
 				Comments = SortedComments.Select(c => c.ToDTO(fileDownloadEndpoint)).ToList(),
+				Likes = Likes.Select(u => u.ToMinimalDTO(fileDownloadEndpoint)).ToList(),
 				User = new UserMinimalProfileDTO(User.UserName!, User.ProfilePic!, fileDownloadEndpoint),
 				CreatedAt = CreatedAt
 			};
