@@ -5,7 +5,10 @@ import { startLoading, stopLoading } from "../../state/actions/isLoading";
 import { setUser } from "../../state/actions/currentUser";
 import ErrorMsg from "./ErrorMsg";
 import nameLogo from "../../assets/namelogo.png";
+import {ping} from "../../helpers.js";
 import "./auth.css";
+import { backend } from "../../config.js";
+import jwt from "jsonwebtoken";
 
 const LoginPage = () =>
 {
@@ -51,33 +54,52 @@ const LoginPage = () =>
 		try
 		{
 			dispatch(startLoading());
-			const user = null;
-			// TODO: Sign in user and get token from server
-			if (!user.emailVerified)
-			{
-				// TODO: Sign out the user by clearing the token
-				const sendEmail = async () =>
-				{
-					// TODO: Send verification email again
-					setErrorMsg("Email sent");
-				};
-				setErrorMsg(<div>Email not verified<br/><span className="link" onClick={sendEmail}>click here</span> to send verification email</div>);
+
+			if (!(await ping())) {
+				setErrorMsg("Server is down.");
 				return dispatch(stopLoading());
 			}
-			// TODO: Get the user info and set it
-			// dispatch(setUser({user, info}));
+
+			const result = await fetch(`${backend}/auth/login`, {
+				method: "POST",
+				body: JSON.stringify({
+					email,
+					password
+				}),
+				headers: {
+					"Content-Type": "application/json"
+				}
+			});
+			const resultJSON = await result.json();
+
+			if (!result.ok)
+				throw new Error(resultJSON.detail, {cause: resultJSON.errors});
+
+			localStorage.setItem("token", resultJSON.token);
+			const claims = jwt.decode(resultJSON.token);
+			dispatch(setUser(claims));
+
 			dispatch(stopLoading());
 		} catch (err)
 		{
-			const errorCode = err.code;
-			console.error("Error with login", err);
-			if (errorCode === "auth/wrong-password" || errorCode === "auth/user-not-found")
-				setErrorMsg("Wrong email or password");
-			else if (errorCode === "auth/too-many-requests")
-				setErrorMsg("Please try again later");
+			const errors = err.cause ?? [];
+			if (errors.some(e => e.code === "UserNotFound"))
+				setErrorMsg(e.description);
+			else if (errors.some(e => e.code === "EmailNotVerified")) {
+				const sendEmail = async () =>
+				{
+					await fetch(`${backend}/auth/send-email-verification?email=${encodeURIComponent(email)}`, {method: "POST"});
+					setErrorMsg("Email sent");
+				};
+				setErrorMsg(<div>Email not verified<br/><span className="link" onClick={sendEmail}>click here</span> to send verification email</div>);
+			} else
+				setErrorMsg(err.message);
+
 			dispatch(stopLoading());
 		}
 	};
+
+	useEffect(() => dispatch(stopLoading()), [dispatch]);
 
 	return(
 		<div id="login-page">

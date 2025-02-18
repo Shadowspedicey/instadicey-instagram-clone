@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Snackbar, Slide, Alert } from "@mui/material";
 import { stopLoading } from "./state/actions/isLoading";
 import { setUser } from "./state/actions/currentUser";
+import jwt from "jsonwebtoken";
 import { closeSnackbar } from "./state/actions/snackbar";
 
 import Navbar from "./components/Navbar";
@@ -45,7 +46,12 @@ const App = () =>
 
 	const checkIfLoggedIn = () =>
 	{
-		// TODO: Check for stored authentication bearer token
+		const storedToken = localStorage.getItem("token");
+		if (storedToken !== null)
+		{
+			const claims = jwt.decode(storedToken);
+			dispatch(setUser(claims));
+		}
 	};
 	useEffect(checkIfLoggedIn, [dispatch]);
 
