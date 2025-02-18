@@ -32,7 +32,7 @@ namespace InstagramClone.Data.Entities
 			IsVerified = IsVerified,
 			Following = Following.Select(u => u.ToMinimalDTO(downloadEndpoint)).ToList(),
 			Followers = Followers.Select(u => u.ToMinimalDTO(downloadEndpoint)).ToList(),
-			Posts = Posts.Select(p => p.ToMinimalDTO(downloadEndpoint)).ToList(),
+			Posts = Posts.OrderByDescending(p => p.CreatedAt).Select(p => p.ToMinimalDTO(downloadEndpoint)).ToList(),
 		};
 
 		public UserMinimalProfileDTO ToMinimalDTO(string downloadEndpoint) => new(UserName!, ProfilePic!, downloadEndpoint);
