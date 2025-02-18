@@ -35,6 +35,6 @@ namespace InstagramClone.Data.Entities
 			Posts = Posts.OrderByDescending(p => p.CreatedAt).Select(p => p.ToMinimalDTO(downloadEndpoint)).ToList(),
 		};
 
-		public UserMinimalProfileDTO ToMinimalDTO(string downloadEndpoint) => new(UserName!, ProfilePic!, downloadEndpoint);
+		public UserMinimalProfileDTO ToMinimalDTO(string downloadEndpoint) => new(UserName!, RealName!, ProfilePic!, downloadEndpoint);
 	}
 }
