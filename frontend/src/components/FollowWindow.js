@@ -6,31 +6,21 @@ import VerifiedTick from "./VerifiedTick";
 
 const FollowWindow = props =>
 {
-	const { title, uids, closeFollowListWindow, newMessage } = props;
+	const { title, users, closeFollowListWindow, newMessage } = props;
 	const currentUser = useSelector(state => state.currentUser);
-	const [list, setList] = useState(null);
-	const [isLoading, setIsLoading] = useState(true);
+	// const [list, setList] = useState(null);
+	const [isLoading, setIsLoading] = useState(false);
 
-	const getRoomID = async (targetUid) => 
-	{
-		// TODO: Gets chat room ID of the current user and a target user
-	};
+	// const getRoomID = async (targetUid) => 
+	// {
+	// 	// TODO: Gets chat room ID of the current user and a target user
+	// };
 
-	const handleStartChat = async (targetUid) =>
-	{
-		closeFollowListWindow();
-		// TODO: Create a chat room in the database for a first-time chat
-	};
-
-	useEffect(() =>
-	{
-		const getUidsInfo = async () =>
-		{
-			// TODO: Get following list as an array of users and set it to the list
-			setIsLoading(false);
-		};
-		getUidsInfo();
-	}, [uids]);
+	// const handleStartChat = async (targetUid) =>
+	// {
+	// 	closeFollowListWindow();
+	// 	// TODO: Create a chat room in the database for a first-time chat
+	// };
 
 	return(
 		<div className="backdrop container" onClick={closeFollowListWindow}>
@@ -59,32 +49,32 @@ const FollowWindow = props =>
 					:
 					<ul>
 						{
-							newMessage
-								?
-								list.map(person => 
-									<Link to={`/direct/t/${getRoomID(person.uid)}`} className="person" key={person.uid} onClick={() => handleStartChat(person.uid, getRoomID(person.uid))}>
-										<div className="profile">
-											<div className="profile-pic"><img src={person.profilePic} alt={`${person.username}'s Pic`}></img></div>
-											<div className="info">
-												<div style={{display: "flex"}}><span className="username">{person.username}</span></div>
-												<span className="real-name">{person.realName}</span>
-											</div>
+							// newMessage
+							// 	?
+							// 	list.map(person => 
+							// 		<Link to={`/direct/t/${getRoomID(person.uid)}`} className="person" key={person.uid} onClick={() => handleStartChat(person.uid, getRoomID(person.uid))}>
+							// 			<div className="profile">
+							// 				<div className="profile-pic"><img src={person.profilePic} alt={`${person.username}'s Pic`}></img></div>
+							// 				<div className="info">
+							// 					<div style={{display: "flex"}}><span className="username">{person.username}</span></div>
+							// 					<span className="real-name">{person.realName}</span>
+							// 				</div>
+							// 			</div>
+							// 		</Link>
+							// 	)
+							// 	:
+							users.map(person => 
+								<li className="person" key={person.username}>
+									<div className="profile">
+										<Link to={`/${person.username}`}><div className="profile-pic"><img src={person.profilePic} alt={`${person.username}'s Pic`}></img></div></Link>
+										<div className="info">
+											<div style={{display: "flex"}}><Link to={`/${person.username}`} className="username">{person.username}</Link> <VerifiedTick user={person} size={15} marginLeft={7.5}/></div>
+											<span className="real-name">{person.realName}</span>
 										</div>
-									</Link>
-								)
-								:
-								list.map(person => 
-									<li className="person" key={person.uid}>
-										<div className="profile">
-											<Link to={`/${person.username}`}><div className="profile-pic"><img src={person.profilePic} alt={`${person.username}'s Pic`}></img></div></Link>
-											<div className="info">
-												<div style={{display: "flex"}}><Link to={`/${person.username}`} className="username">{person.username}</Link> <VerifiedTick user={person} size={15} marginLeft={7.5}/></div>
-												<span className="real-name">{person.realName}</span>
-											</div>
-										</div>
-										{currentUser && currentUser.user.uid === person.uid ? null : <FollowButton target={person} startLoading={() => setIsLoading(true)} stopLoading={() => setIsLoading(false)}/>}
-									</li>
-								)
+									</div>
+									{currentUser && currentUser.username === person.username ? null : <FollowButton target={person} startLoading={() => setIsLoading(true)} stopLoading={() => setIsLoading(false)}/>}
+								</li>
+							)
 						}
 					</ul>
 				}
