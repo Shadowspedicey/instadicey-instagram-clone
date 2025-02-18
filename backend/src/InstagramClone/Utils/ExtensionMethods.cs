@@ -22,13 +22,13 @@ namespace InstagramClone.Utils
 			switch (Enum.Parse<ErrorCode>(error.Metadata["code"].ToString()!))
 			{
 				case ErrorCode.NotFound:
-					return controllerBase.ProblemWithErrors(statusCode: 404, detail: error.Message, errors: error.Metadata);
+					return controllerBase.ProblemWithErrors(statusCode: 404, detail: error.Message, errors: result.Errors.Select(e => e.Metadata));
 				case ErrorCode.InsufficientPermissions:
-					return controllerBase.ProblemWithErrors(statusCode: 403, detail: error.Message, errors: error.Metadata);
+					return controllerBase.ProblemWithErrors(statusCode: 403, detail: error.Message, errors: result.Errors.Select(e => e.Metadata));
 				case ErrorCode.Duplicate:
 				case ErrorCode.InvalidInput:
 				default:
-					return controllerBase.ProblemWithErrors(statusCode: 400, detail: error.Message, errors: error.Metadata);
+					return controllerBase.ProblemWithErrors(statusCode: 400, detail: error.Message, errors: result.Errors.Select(e => e.Metadata));
 			}
 		}
 		public static IActionResult AppropriateResponseBasedOnResult<T>(this ControllerBase controllerBase, Result<T> result)
@@ -40,13 +40,13 @@ namespace InstagramClone.Utils
 			switch (Enum.Parse<ErrorCode>(error.Metadata["code"].ToString()!))
 			{
 				case ErrorCode.NotFound:
-					return controllerBase.ProblemWithErrors(statusCode: 404, detail: error.Message, errors: error.Metadata);
+					return controllerBase.ProblemWithErrors(statusCode: 404, detail: error.Message, errors: result.Errors.Select(e => e.Metadata));
 				case ErrorCode.InsufficientPermissions:
-					return controllerBase.ProblemWithErrors(statusCode: 403, detail: error.Message, errors: error.Metadata);
+					return controllerBase.ProblemWithErrors(statusCode: 403, detail: error.Message, errors: result.Errors.Select(e => e.Metadata));
 				case ErrorCode.Duplicate:
 				case ErrorCode.InvalidInput:
 				default:
-					return controllerBase.ProblemWithErrors(statusCode: 400, detail: error.Message, errors: error.Metadata);
+					return controllerBase.ProblemWithErrors(statusCode: 400, detail: error.Message, errors: result.Errors.Select(e => e.Metadata));
 			}
 		}
 
