@@ -73,7 +73,7 @@ namespace InstagramClone.Controllers
 		{
 			var result = await _userService.GetSavedPosts(User);
 
-			return result.IsSuccess ? Ok(result.Value.Select(p => p.ToDTO(DownloadFileEndpoint))) : this.AppropriateResponseBasedOnResult(result);
+			return result.IsSuccess ? Ok(result.Value.Select(p => p.ToMinimalDTO(DownloadFileEndpoint))) : this.AppropriateResponseBasedOnResult(result);
 		}
 
 
