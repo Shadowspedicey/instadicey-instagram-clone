@@ -99,6 +99,14 @@ const App = () =>
 				anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
 				TransitionComponent={Slide}
 				className="snackbar"
+				sx={{
+					"& .MuiAlert-message": {
+						fontWeight: "bold"
+					},
+					"& .MuiAlert-action": {
+						paddingLeft: "4px"
+					}
+				}}
 			>
 				<Alert onClose={snackbar.handleClose} severity={snackbar.severity} icon={false}>{snackbar.message}</Alert>
 			</Snackbar>
