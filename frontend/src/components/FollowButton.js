@@ -2,44 +2,82 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setSnackbar } from "../state/actions/snackbar";
 import Loading from "../assets/misc/loading.jpg";
+import { backend } from "../config";
+import { logOut } from "../helpers";
+import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 
 const FollowButton = ({ target }) =>
 {
 	const dispatch = useDispatch();
+	const history = useHistory();
 	const currentUser = useSelector(state => state.currentUser);
 	const [isLoading, setIsLoading] = useState(null);
 	const [isFollowing, setIsFollowing] = useState(false);
 	useEffect(() =>
 	{
-		const checkIfFollowing = async () =>
-		{
-			if (!currentUser) return;
-			setIsLoading(true);
-			// TODO: Check if current user is following target user from DB, and set it (setIsFollowing)
-			setIsLoading(false);
-		};
-		checkIfFollowing();
-	// eslint-disable-next-line react-hooks/exhaustive-deps
+		if (currentUser)
+			setIsFollowing(target.followers.some(u => u.username === currentUser.username));
 	}, [currentUser, target]);
 
-	const follow = async () =>
-	{
-		if (!currentUser) return alert("sign in");
-		window.onbeforeunload = () => "";
+	const follow = async () => {
 		setIsLoading(true);
-		// TODO: follow the target user
-		setIsFollowing(true);
+		try {
+			const result = await fetch(`${backend}/user/follow/${target.username}`, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${localStorage.token}`
+				}
+			});
+			if (result.status === 401)
+				return logOut(dispatch, history);
+			
+			if (!result.ok)
+			{
+				const resultJSON = await result.json();
+				throw new Error(resultJSON.detail, { cause: resultJSON.errors });
+			}
+			setIsFollowing(true);
+		}
+		catch (err) {
+			const errors = err.cause ?? [];
+			if (errors.some(e => e.code === "NotFound"))
+				dispatch(setSnackbar("User not found.", "error"));
+			else if (errors.some(e => e.code === "Duplicate"))
+				dispatch(setSnackbar("User already followed", "error"));
+			else
+				dispatch(setSnackbar(err.message, "error"));
+		}
 		setIsLoading(false);
-		window.onbeforeunload = null;
 	};
-	const unfollow = async () =>
-	{
-		window.onbeforeunload = () => "";
+	const unfollow = async () => {
 		setIsLoading(true);
-		// TODO: unfollow the target user
-		setIsFollowing(false);
+		try {
+			const result = await fetch(`${backend}/user/unfollow/${target.username}`, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${localStorage.token}`
+				}
+			});
+			if (result.status === 401)
+				return logOut(dispatch, history);
+			
+			if (!result.ok)
+			{
+				const resultJSON = await result.json();
+				throw new Error(resultJSON.detail, { cause: resultJSON.errors });
+			}
+			setIsFollowing(false);
+		}
+		catch (err) {
+			const errors = err.cause ?? [];
+			if (errors.some(e => e.code === "NotFound"))
+				dispatch(setSnackbar("User not found.", "error"));
+			else if (errors.some(e => e.code === "Duplicate"))
+				dispatch(setSnackbar("User already not followed", "error"));
+			else
+				dispatch(setSnackbar(err.message, "error"));
+		}
 		setIsLoading(false);
-		window.onbeforeunload = null;
 	};
 
 	if (isLoading) return <button className="follow-btn loading"><div><img src={Loading} alt="loading"></img></div></button>;
