@@ -3,12 +3,12 @@ import { Link, useHistory, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import OutsideClickHandler from "react-outside-click-handler";
 import { useMediaQuery } from "react-responsive";
-import { startLoading, stopLoading } from "../state/actions/isLoading";
 import { setSnackbar } from "../state/actions/snackbar";
 import { setNewPost } from "../state/actions/newPost";
 import nameLogo from "../assets/namelogo.png";
 import Logo from "../assets/logo.png";
 import Loading from "../assets/misc/loading.jpg";
+import { logOut } from "../helpers";
 
 const Navbar = () =>
 {
@@ -16,7 +16,7 @@ const Navbar = () =>
 	const location = useLocation();
 	const dispatch = useDispatch();
 	const addPostButton = useRef();
-	const { username, profilePic } = useSelector(state => state.currentUser.info) || "";
+	const { username, profilePic } = useSelector(state => state.currentUser) || "";
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 	const [playDropdownClose, setPlayDropdownClose] = useState(false);
 	const phoneQuery = useMediaQuery({query: "(max-width: 600px)"});
@@ -35,14 +35,6 @@ const Navbar = () =>
 		e.stopPropagation();
 		setPlayDropdownClose(true);
 		setTimeout(() => { setIsDropdownOpen(false); setPlayDropdownClose(false); }, 125);
-	};
-	
-	const logOut = async () =>
-	{
-		dispatch(startLoading());
-		// TODO: Log out by clearing the token from storage
-		history.push("/");
-		dispatch(stopLoading());
 	};
 
 	return(
@@ -80,7 +72,7 @@ const Navbar = () =>
 											Settings
 										</Link>
 									</li>
-									<li className="log-out" onClick={() => { logOut(); }}>
+									<li className="log-out" onClick={() => { logOut(dispatch, history); }}>
 										Log Out
 									</li>
 								</ul>
