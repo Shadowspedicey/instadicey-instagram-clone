@@ -25,5 +25,6 @@ namespace InstagramClone.Interfaces
 		public Task<Result> RemoveFromRecentSearches(ClaimsPrincipal currentUserPrincipal, string removedUsername);
 		public Task<Result> ClearRecentSearches(ClaimsPrincipal currentUserPrincipal);
 		public Task<Result<IEnumerable<User>>> GetRecentSearches(ClaimsPrincipal currentUserPrincipal);
+		public Task<Result<bool>> FollowingCheck(ClaimsPrincipal currentUserPrincipal, string usernametoCheck);
 	}
 }

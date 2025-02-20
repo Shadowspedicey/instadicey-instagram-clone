@@ -170,6 +170,16 @@ namespace InstagramClone.Services
 			return Result.Ok();
 		}
 
+		public async Task<Result<bool>> FollowingCheck(ClaimsPrincipal currentUserPrincipal, string usernametoCheck)
+		{
+			User currentUser = (await _dbContext.Users.FindAsync(currentUserPrincipal.FindFirstValue("sub")))!;
+			User? userToCheck = await _dbContext.Users.FirstOrDefaultAsync(u => u.UserName == usernametoCheck);
+			if (userToCheck is null)
+				return Result.Fail(new CodedError(ErrorCode.NotFound, "User was not found."));
+
+			return Result.Ok(currentUser.Following.Contains(userToCheck));
+		}
+
 		public async Task<Result> SavePost(ClaimsPrincipal currentUserPrincipal, string postID)
 		{
 			User currentUser = (await _dbContext.Users.FindAsync(currentUserPrincipal.FindFirstValue("sub")))!;

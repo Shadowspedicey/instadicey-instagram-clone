@@ -50,6 +50,14 @@ namespace InstagramClone.Controllers
 			return result.IsSuccess ? NoContent() : this.AppropriateResponseBasedOnResult(result);
 		}
 
+		[HttpGet("following-check/{username}")]
+		public async Task<IActionResult> FollowingCheck(string username)
+		{
+			var result = await _userService.FollowingCheck(User, username);
+
+			return result.IsSuccess ? Ok(result.Value) : this.AppropriateResponseBasedOnResult(result);
+		}
+
 
 
 		[HttpPost("saved-posts/{postID}")]
