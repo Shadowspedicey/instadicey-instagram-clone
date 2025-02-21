@@ -1,19 +1,22 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setSnackbar } from "../../state/actions/snackbar";
+import { backend } from "../../config";
+import { logOut } from "../../helpers";
+import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 
 const Like = ({size = 25, target, isComment}) =>
 {
 	const dispatch = useDispatch();
+	const history = useHistory();
 	const currentUser = useSelector(state => state.currentUser);
 	const [isLiked, setIsLiked] = useState(false);
 	useEffect(() =>
 	{
 		const checkIfLiked = async () =>
 		{
-			if (!currentUser) return;
-			if (target.likes.includes(currentUser.user.uid)) setIsLiked(true);
-			else setIsLiked(false);
+			if (currentUser && target.likes.some(u => u.username === currentUser.username))
+				setIsLiked(true);
 		};
 		checkIfLiked();
 	}, [currentUser, target]);
@@ -23,38 +26,67 @@ const Like = ({size = 25, target, isComment}) =>
 		if (!currentUser) return alert("sign in");
 		try
 		{
+			var result;
 			if (isComment)
-			{
-				// TODO: Add a like to the comment (target) by adding the current user's uid to the comment-likes table thing
-			} else
-			{
-				// TODO: Add a like to the post (target) by adding the current user's uid to the post-likes table thing
+				result = await fetch(`${backend}/like/comment/${target.id}`, {
+					method: "POST",
+					headers: {
+						Authorization: `Bearer ${localStorage.token}`
+					}
+				});
+			else
+				result = await fetch(`${backend}/like/post/${target.id}`, {
+					method: "POST",
+					headers: {
+						Authorization: `Bearer ${localStorage.token}`
+					}
+				});
+
+			if (result.status === 401)
+				return logOut(dispatch, history);
+			if (!result.ok) {
+				const resultJSON = await result.json();
+				throw new Error(resultJSON.detail, { cause: resultJSON.errors });
 			}
+			setIsLiked(true);
 		} catch (err)
 		{
-			console.error(err);
-			dispatch(setSnackbar("Oops, try again later.", "error"));
+			dispatch(setSnackbar(err.message ?? "Oops, try again later.", "error"));
 		}
-		setIsLiked(true);
 	};
 	
 	const unlike = async () =>
 	{
+		if (!currentUser) return alert("sign in");
 		try
 		{
+			var result;
 			if (isComment)
-			{
-				// TODO: Reverse of the TODO above
-			} else
-			{
-				// TODO: Reverse of the TODO above
+				result = await fetch(`${backend}/like/comment/remove/${target.id}`, {
+					method: "POST",
+					headers: {
+						Authorization: `Bearer ${localStorage.token}`
+					}
+				});
+			else
+				result = await fetch(`${backend}/like/post/remove/${target.id}`, {
+					method: "POST",
+					headers: {
+						Authorization: `Bearer ${localStorage.token}`
+					}
+				});
+
+			if (result.status === 401)
+				return logOut(dispatch, history);
+			if (!result.ok) {
+				const resultJSON = await result.json();
+				throw new Error(resultJSON.detail, { cause: resultJSON.errors });
 			}
+			setIsLiked(false);
 		} catch (err)
 		{
-			console.error(err);
-			dispatch(setSnackbar("Oops, try again later.", "error"));
+			dispatch(setSnackbar(err.message ?? "Oops, try again later.", "error"));
 		}
-		setIsLiked(false);
 	};
 
 	if (isLiked)

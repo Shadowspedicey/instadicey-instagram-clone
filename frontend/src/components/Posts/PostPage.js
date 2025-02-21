@@ -6,12 +6,14 @@ import PostWindow from "./PostWindow";
 import PostCard from "./PostCard";
 import BrokenPage from "../BrokenPage";
 import "./post-page.css";
+import { backend } from "../../config";
 
 const PostPage = () =>
 {
 	const { postID } = useParams();
 	const dispatch = useDispatch();
 	const [postData, setPostData] = useState(null);
+	// TODO
 	const [morePosts, setMorePosts] = useState(null);
 	const [isSmallScreen, setIsSmallScreen] = useState(false);
 	const handleResize = () => window.innerWidth < 1024 ? setIsSmallScreen(true) : setIsSmallScreen(false);
@@ -26,24 +28,38 @@ const PostPage = () =>
 	{
 		try
 		{
-			dispatch(startLoading());
-			// TODO: Get post data by ID and set it
+			const result = await fetch(`${backend}/post/${postID}`);
+			const resultJSON = await result.json();
+
+			if (!result.ok)
+				throw new Error(resultJSON.detail, { cause: resultJSON.errors });
+
+			// Required because JS UTC dates have to end with Z
+			resultJSON.comments =resultJSON.comments.map(c => {
+				const newComment = {...c, createdAt: c.createdAt + "Z"};
+				return newComment;
+			});
+			setPostData(resultJSON);
 			// getMorePosts(post);
 		} catch (err)
 		{
 			console.error(err);
 		}
-		dispatch(stopLoading());
 	};
 
-	const getMorePosts = async postData =>
-	{
-		// TODO: Gets other posts (max 6) from the same user
-	};
+	// const getMorePosts = async postData =>
+	// {
+	// 	// TODO: Gets other posts (max 6) from the same user
+	// };
 
 	useEffect(() =>
 	{
-		getPostData();
+		const getData = async () => {
+			dispatch(startLoading());
+			await getPostData();
+			dispatch(stopLoading());
+		};
+		getData();
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [postID]);
 
@@ -52,8 +68,8 @@ const PostPage = () =>
 		<div className="post-page">
 			{
 				isSmallScreen
-					? <PostWindow postID={postID} isVertical/>
-					: <PostWindow postID={postID}/>
+					? <PostWindow post={postData} refreshPost={getPostData} isVertical/>
+					: <PostWindow post={postData} refreshPost={getPostData} />
 			}
 			<div className="more-posts">
 				<header>More posts from this user</header>

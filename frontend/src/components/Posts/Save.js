@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setSnackbar } from "../../state/actions/snackbar";
+import { backend } from "../../config";
+import { logOut } from "../../helpers";
+import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 
 const Save = ({size = 25, target}) =>
 {
 	const dispatch = useDispatch();
+	const history = useHistory();
 	const currentUser = useSelector(state => state.currentUser);
 	const [isSaved, setIsSaved] = useState(false);
 	useEffect(() =>
@@ -12,7 +16,16 @@ const Save = ({size = 25, target}) =>
 		const checkIfSaved = async () =>
 		{
 			if (!currentUser) return;
-			// TODO: Check if it's in the user's saved list and set it (setIsSaved)
+
+			const savedPosts = await fetch(`${backend}/user/saved-posts`, {
+				headers: {
+					Authorization: `Bearer ${localStorage.token}`
+				}
+			});
+			const savedPostsJSON = await savedPosts.json();
+
+			if (savedPosts.ok && savedPostsJSON.some(p => p.id === target.id))
+				setIsSaved(true);
 		};
 		checkIfSaved();
 	}, [currentUser, target]);
@@ -21,15 +34,24 @@ const Save = ({size = 25, target}) =>
 	{
 		try
 		{
-			if (!currentUser) throw new Error("User not signed in");
-			// TODO: Add to the user's saved posts table
+			const result = await fetch(`${backend}/user/saved-posts/${target.id}`, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${localStorage.token}`
+				}
+			});
+			if (result.status === 401)
+				return logOut(dispatch, history);
+
+			if (!result.ok)
+			{
+				const resultJSON = await result.json();
+				throw new Error(resultJSON.detail, { cause: resultJSON.errors });
+			}
 			setIsSaved(true);
 		} catch (err)
 		{
-			console.error(err);
-			if (err.message === "User not signed in")
-				return dispatch(setSnackbar("Please sign in first!", "error"));
-			else dispatch(setSnackbar("Oops, try again later.", "error"));
+			dispatch(setSnackbar(err.message ?? "Oops, try again later.", "error"));
 		}
 	};
 
@@ -37,12 +59,24 @@ const Save = ({size = 25, target}) =>
 	{
 		try
 		{
-			// TODO: Remove it from the user's saved posts table
+			const result = await fetch(`${backend}/user/saved-posts/remove/${target.id}`, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${localStorage.token}`
+				}
+			});
+			if (result.status === 401)
+				return logOut(dispatch, history);
+
+			if (!result.ok)
+			{
+				const resultJSON = await result.json();
+				throw new Error(resultJSON.detail, { cause: resultJSON.errors });
+			}
 			setIsSaved(false);
 		} catch (err)
 		{
-			console.error(err);
-			dispatch(setSnackbar("Oops, try again later.", "error"));
+			dispatch(setSnackbar(err.message ?? "Oops, try again later.", "error"));
 		}
 	};
 

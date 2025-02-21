@@ -1,8 +1,7 @@
 import { useRef, useState, useEffect } from "react";
 import { Link, useHistory, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { nanoid } from "nanoid";
-import { format, formatDistanceToNowStrict, fromUnixTime, getYear } from "date-fns";
+import { format, formatDistanceToNowStrict, getYear } from "date-fns";
 import { setSnackbar } from "../../state/actions/snackbar";
 import FollowButton from "../FollowButton";
 import FollowWindow from "../FollowWindow";
@@ -10,8 +9,10 @@ import Like from "./Like";
 import Comment from "./Comment";
 import Save from "./Save";
 import VerifiedTick from "../VerifiedTick";
+import { backend } from "../../config";
+import { logOut } from "../../helpers";
 
-const PostWindow = ({post, isVertical}) =>
+const PostWindow = ({post, isVertical, refreshPost}) =>
 {
 	const history = useHistory();
 	const location = useLocation();
@@ -19,8 +20,8 @@ const PostWindow = ({post, isVertical}) =>
 	const dispatch = useDispatch();
 	const currentUser = useSelector(state => state.currentUser);
 
-	const [userInfo, setUserInfo] = useState(null);
-	const [comments, setComments] = useState(null);
+	const createdAtDate = new Date(post.createdAt);
+	const [fullCommentsFlag, setFullCommentsFlag] = useState(false);
 
 	const [isInfoValid, setIsInfoValid] = useState(false);
 	const [commentLoading, setCommentLoading] = useState(false);
@@ -34,16 +35,6 @@ const PostWindow = ({post, isVertical}) =>
 		return () => closeDialogBox();
 	}, []);
 
-	const getUserData = async uid =>
-	{
-		// TODO: Get user data as an object and set it
-	};
-
-	const getPostComments = async () =>
-	{
-		// TODO: Get the post comments as an array and set it
-	};
-
 	const handleAddComment = async e =>
 	{
 		e.preventDefault();
@@ -53,23 +44,35 @@ const PostWindow = ({post, isVertical}) =>
 		{
 			setCommentLoading(true);
 			const comment = addComment.current.value;
-			const id = nanoid(32);
 			if (comment.trim().length < 1)
-				throw new Error("Comment is empty");
+				return dispatch(setSnackbar("Please enter a comment.", "error"));
 			if (comment.length > 2200)
-				throw new Error("Comment too long");
-			// TODO: POST the comment (comment, likes [], uid of who commented, timestamp)
-			await getPostComments(post.id);
+				return dispatch(setSnackbar("Comment too long. max is 2200 characters.", "error"));
+
+			const result = await fetch(`${backend}/comment/post/${post.id}`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${localStorage.token}`
+				},
+				body: JSON.stringify({
+					comment: comment
+				})
+			});
+			if (result.status === 401)
+				return logOut(dispatch, history);
+
+			if (!result.ok)
+			{
+				const resultJSON = await result.json();
+				throw new Error(resultJSON.detail, { cause: resultJSON.errors });
+			}
+			await refreshPost();
 			setCommentLoading(false);
 			addComment.current.value = "";
 		} catch (err)
 		{
-			console.error(err);
-			if (err.message === "Comment is empty")
-				return dispatch(setSnackbar("Please enter a password.", "error"));
-			else if (err.message === "Comment too long")
-				return dispatch(setSnackbar("Comment too long. max is 2200 characters.", "error"));
-			else dispatch(setSnackbar("Oops, try again later.", "error"));
+			dispatch(setSnackbar(err.message ?? "Oops, try again later.", "error"));
 		}
 	};
 
@@ -86,36 +89,36 @@ const PostWindow = ({post, isVertical}) =>
 	{
 		try
 		{
-			if (currentUser.user.uid !== post.user) throw new Error("Fuck off");
+			if (currentUser.username !== post.user.username) throw new Error("Fuck off");
 			setIsLoading(true);
-			// TODO: Delete the post from the posts table
+			
+			const result = await fetch(`${backend}/post/delete/${post.id}`, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${localStorage.token}`
+				}
+			});
+			if (result.status === 401)
+				return logOut(dispatch, history);
+
+			if (!result.ok) {
+				const resultJSON = await result.json();
+				throw new Error(resultJSON.detail, { cause: resultJSON.errors });
+			}
 			history.push("/");
 		} catch (err)
 		{
-			setIsLoading(false);
-			console.error(err);
+			dispatch(setSnackbar(err.message, "error"));
 		}
+		setIsLoading(false);
 	};
 
-	useEffect(() =>
-	{
-		const getData = async () =>
-		{
-			//dispatch(startLoading());
-			// TODO: await getUserData(post.user);
-			await getPostComments();
-			//dispatch(stopLoading());
-		};
-		getData();
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
-
-	if (!currentUser || !post || !comments) return null;
+	if (!currentUser || !post) return null;
 	if (isVertical)
 		return(
 			<div className="post-window outlined vertical">
 				{ likesWindow
-					? <FollowWindow title="Likes" uids={likesWindow} closeFollowListWindow={() => setLikesWindow(null)}/>
+					? <FollowWindow title="Likes" users={likesWindow} closeFollowListWindow={() => setLikesWindow(null)}/>
 					: null
 				}
 				{ isDialogBoxOpen &&
@@ -129,8 +132,8 @@ const PostWindow = ({post, isVertical}) =>
 				</div>
 				}
 				<div className="poster">
-					<Link to={`/${userInfo.username}`}><div className="profile-pic outlined round"><img src={userInfo.profilePic} alt="Profile Pic"></img></div></Link>
-					<Link to={`/${userInfo.username}`} className="username">{userInfo.username}</Link>
+					<Link to={`/${post.user.username}`}><div className="profile-pic outlined round"><img src={post.user.profilePic} alt="Profile Pic"></img></div></Link>
+					<Link to={`/${post.user.username}`} className="username">{post.user.username}</Link>
 					<button className="icon" style={{width: 15, height: 15}} onClick={() => setIsDialogBoxOpen(true)}><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"><path d="M6 12c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3zm9 0c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3zm9 0c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3z"/></svg></button>
 				</div>
 				<div className="post-photo">
@@ -157,29 +160,32 @@ const PostWindow = ({post, isVertical}) =>
 								noPhoto
 								noTimestamp
 								noLikesCounter
+								noRemove
+								postData={post}
 							/>
 						}
-						{comments.length > 2 && <Link to={`/p/${post.id}`} style={{color: "#8e8e8e", fontSize: "0.9em", fontWeight: "500"}}>View all {comments.length} comments</Link>}
+						{post.comments.length > 2 && !fullCommentsFlag &&
+							<Link onClick={() => setFullCommentsFlag(true)} to={`/p/${post.id}`} style={{color: "#8e8e8e", fontSize: "0.9em", fontWeight: "500"}}>View all {post.comments.length} comments</Link>}
 						{
-							comments.slice(0, 2).map(comment =>
+							post.comments.slice(0, fullCommentsFlag ? post.comments.length : 2).map(comment =>
 								<Comment
+									postData = {post}
 									commentData={comment}
 									key={comment.id}
 									setLikesWindow={setLikesWindow}
-									refreshComments={getPostComments}
+									refreshComments={refreshPost}
 									noPhoto
 									noTimestamp
 									noLikesCounter
-									noRemove
 								/>)
 						}
-						<span className="timestamp" title={format(fromUnixTime(post.timestamp.seconds), "d MMM, yyyy")}>
+						<span className="timestamp" title={format(createdAtDate, "d MMM, yyyy")}>
 							{
-								new Date().getTime() / 1000 - post.timestamp.seconds > 604800
-									?	getYear(fromUnixTime(post.timestamp.seconds)) === getYear(new Date())
-										? format(fromUnixTime(post.timestamp.seconds), "d MMMM")
-										: format(fromUnixTime(post.timestamp.seconds), "d MMMM, yyyy")
-									: formatDistanceToNowStrict(fromUnixTime(post.timestamp.seconds))
+								(new Date() - createdAtDate) / (1000 * 60 * 60 * 24) > 7
+									?	getYear(createdAtDate) === getYear(new Date())
+										? format(createdAtDate, "d MMMM")
+										: format(createdAtDate, "d MMMM, yyyy")
+									: formatDistanceToNowStrict(createdAtDate)
 							}
 						</span>
 					</div>
@@ -193,13 +199,13 @@ const PostWindow = ({post, isVertical}) =>
 	else return(
 		<div className={`post-window outlined ${isLoading ? "disabled" : ""}`}>
 			{ likesWindow
-				? <FollowWindow title="Likes" uids={likesWindow} closeFollowListWindow={() => setLikesWindow(null)}/>
+				? <FollowWindow title="Likes" users={likesWindow} closeFollowListWindow={() => setLikesWindow(null)}/>
 				: null
 			}
 			{ isDialogBoxOpen &&
 				<div className="dialog-box-container" onClick={closeDialogBox}>
 					<div className="dialog-box" onClick={e => e.stopPropagation()}>
-						{currentUser.user.uid === post.user && <button className="remove text" onClick={deletePost}>Delete</button>}
+						{currentUser && currentUser.username === post.user.username && <button className="remove text" onClick={deletePost}>Delete</button>}
 						<button className="cancel text" onClick={closeDialogBox}>Cancel</button>
 					</div>
 				</div>
@@ -207,27 +213,30 @@ const PostWindow = ({post, isVertical}) =>
 			<img src={post.photo} alt={post.caption}></img>
 			<div className="side">
 				<div className="poster">
-					<Link to={`/${userInfo.username}`}><div className="profile-pic outlined round"><img src={userInfo.profilePic} alt="Profile Pic"></img></div></Link>
-					<Link to={`/${userInfo.username}`} className="username">{userInfo.username}</Link>
-					<VerifiedTick size={15} user={userInfo} marginLeft={7.5}/>
-					{post.user === currentUser.user.uid && <button className="icon" style={{width: 15, height: 15}} onClick={() => setIsDialogBoxOpen(true)}><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"><path d="M6 12c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3zm9 0c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3zm9 0c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3z"/></svg></button>}
-					{currentUser.info.uid === userInfo.uid ? null : <FollowButton target={userInfo}></FollowButton>}
+					<Link to={`/${post.user.username}`}><div className="profile-pic outlined round"><img src={post.user.profilePic} alt="Profile Pic"></img></div></Link>
+					<Link to={`/${post.user.username}`} className="username">{post.user.username}</Link>
+					<VerifiedTick size={15} user={post.user} marginLeft={7.5}/>
+					{currentUser && currentUser.username === post.user.username && <button className="icon" style={{width: 15, height: 15}} onClick={() => setIsDialogBoxOpen(true)}><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"><path d="M6 12c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3zm9 0c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3zm9 0c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3z"/></svg></button>}
+					{currentUser && currentUser.username === post.user.username ? null : <FollowButton target={post.user}></FollowButton>}
 				</div>
 				<div className="comments">
-					{ post.caption.length === 0 ||
+					{
 						<Comment
-							commentData={{user: post.user, comment: post.caption, timestamp: post.timestamp}}
+							commentData={{user: post.user, comment: post.caption, createdAt: post.createdAt}}
 							noLike
 							noLikesCounter
+							noRemove
+							postData={post}
 						/>
 					}
 					{
-						comments.map(comment =>
+						post.comments.map(comment =>
 							<Comment
 								commentData={comment}
 								key={comment.id}
 								setLikesWindow={setLikesWindow}
-								refreshComments={getPostComments}
+								postData={post}
+								refreshComments={refreshPost}
 							/>)
 					}
 				</div>
@@ -240,11 +249,11 @@ const PostWindow = ({post, isVertical}) =>
 						<Save target={post}/>
 					</div>
 					<span className="likes" onClick={() => setLikesWindow(post.likes)}><span className="number">{post.likes.length}</span> likes</span>
-					<span className="timestamp" title={format(fromUnixTime(post.timestamp.seconds), "d MMM, yyyy")}>
+					<span className="timestamp" title={format(createdAtDate, "d MMM, yyyy")}>
 						{
-							getYear(fromUnixTime(post.timestamp.seconds)) === getYear(new Date())
-								? format(fromUnixTime(post.timestamp.seconds), "d MMMM")
-								: format(fromUnixTime(post.timestamp.seconds), "d MMMM, yyyy")
+							getYear(createdAtDate) === getYear(new Date())
+								? format(createdAtDate, "d MMMM")
+								: format(createdAtDate, "d MMMM, yyyy")
 						}
 					</span>
 				</div>
