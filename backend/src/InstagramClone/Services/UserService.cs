@@ -142,6 +142,10 @@ namespace InstagramClone.Services
 		{
 			User currentUser = (await _dbContext.Users.FindAsync(currentUserPrincipal.FindFirstValue("sub")))!;
 			User? followedUser = await _dbContext.Users.FirstOrDefaultAsync(u => u.UserName == usernameToFollow);
+
+			if (currentUser == followedUser)
+				return Result.Fail(new CodedError(ErrorCode.InvalidInput, "A user can't follow himself."));
+
 			if (followedUser is null)
 				return Result.Fail(new CodedError(ErrorCode.NotFound, "User was not found."));
 
@@ -158,6 +162,10 @@ namespace InstagramClone.Services
 		{
 			User currentUser = (await _dbContext.Users.FindAsync(currentUserPrincipal.FindFirstValue("sub")))!;
 			User? unfollowedUser = await _dbContext.Users.FirstOrDefaultAsync(u => u.UserName == usernameToUnfollow);
+
+			if (currentUser == unfollowedUser)
+				return Result.Fail(new CodedError(ErrorCode.InvalidInput, "A user can't follow himself."));
+
 			if (unfollowedUser is null)
 				return Result.Fail(new CodedError(ErrorCode.NotFound, "User was not found."));
 
