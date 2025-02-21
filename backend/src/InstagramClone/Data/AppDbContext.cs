@@ -57,6 +57,14 @@ namespace InstagramClone.Data
 					.UsingEntity(j =>
 					{
 						j.ToTable("CommentsLikes");
+						j.HasOne(typeof(Comment))
+							.WithMany()
+							.HasForeignKey("CommentID")
+							.OnDelete(DeleteBehavior.Cascade);
+						j.HasOne(typeof(User))
+							.WithMany()
+							.HasForeignKey("LikesId")
+							.OnDelete(DeleteBehavior.Cascade);
 						j.Property("LikesId").HasColumnName("UserID");
 					});
 
