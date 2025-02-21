@@ -5,8 +5,9 @@ import store from "../../state";
 import { startLoading, stopLoading } from "../../state/actions/isLoading";
 import { setNewPost } from "../../state/actions/newPost";
 import { setSnackbar } from "../../state/actions/snackbar";
-import { nanoid } from "nanoid";
 import Cropper from "react-easy-crop";
+import { backend } from "../../config";
+import { logOut } from "../../helpers";
 
 const NewPost = () =>
 {
@@ -48,21 +49,34 @@ const NewPost = () =>
 		try
 		{
 			dispatch(startLoading());
-			const postID = nanoid(32);
 			const caption = captionRef.current.value;
 			const croppedPhoto = await getCroppedImg(photoUrl, croppedAreaPixels, rotation);
+			console.log(croppedPhoto instanceof File);
+			const formData = new FormData();
+			formData.append("caption", caption);
+			formData.append("photo", croppedPhoto, photo.name);
+			const result = await fetch(`${backend}/post/create`, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${localStorage.token}`
+				},
+				body: formData
+			});
+			const resultJSON = await result.json();
+			console.log(resultJSON);
+			if (result.status === 401)
+				return logOut(dispatch, history);
 
-			// TODO: Upload the picture file itself and store it, and create an entry for it in the DB
-			// The post entry should have: photoUrl, caption, user (uid), id, timestamp
+			if (!result.ok)
+				throw new Error(resultJSON.detail, { cause: resultJSON.errors });
 
 			dispatch(setSnackbar("Post uploaded.", "success"));
-			history.push(`/p/${postID}`);
+			history.push(`/p/${resultJSON.id}`);
 		} catch (err)
 		{
-			dispatch(stopLoading());
-			console.error(err);
-			dispatch(setSnackbar("Oops, try again later.", "error"));
+			dispatch(setSnackbar(err.message ?? "Oops, try again later.", "error"));
 		}
+		dispatch(stopLoading());
 	};
 
 	if (!currentUser || !photoUrl) return null;
@@ -87,7 +101,7 @@ const NewPost = () =>
 				/>
 			</div>
 			<div className="caption-container outlined">
-				<div className="profile-pic outlined round"><img src={currentUser.info.profilePic} alt="profile pic"></img></div>
+				<div className="profile-pic outlined round"><img src={currentUser.profilePic} alt="profile pic"></img></div>
 				<textarea className="caption" placeholder="Write a caption..." ref={captionRef}></textarea>
 			</div>
 		</div>
@@ -154,7 +168,6 @@ const foo = (() =>
 
 		// As Base64 string
 		// return canvas.toDataURL("image/jpeg");
-
 		// As a blob
 		return new Promise(resolve => canvas.toBlob(file => resolve(file), "image/png"));
 	};
