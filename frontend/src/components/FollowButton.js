@@ -15,8 +15,27 @@ const FollowButton = ({ target }) =>
 	const [isFollowing, setIsFollowing] = useState(false);
 	useEffect(() =>
 	{
-		if (currentUser)
-			setIsFollowing(target.followers.some(u => u.username === currentUser.username));
+		if (currentUser) {
+			const checkIfFollowing = async () =>
+			{
+				setIsLoading(true);
+				const result = await fetch(`${backend}/user/following-check/${target.username}`, {
+					headers: {
+						Authorization: `Bearer ${localStorage.token}`
+					}
+				});
+				if (result.status === 401)
+					return logOut();
+				if (!result.ok)
+					return setIsFollowing(false);
+
+
+				const resultJSON = await result.json();
+				setIsFollowing(resultJSON);
+				setIsLoading(false);
+			};
+			checkIfFollowing();
+		}
 	}, [currentUser, target]);
 
 	const follow = async () => {
