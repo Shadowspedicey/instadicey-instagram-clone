@@ -5,7 +5,7 @@ namespace InstagramClone.Data.Annotations
 {
 	public class ImageOnlyAttribute : ValidationAttribute
 	{
-		private readonly string[] allowedExtensions = { ".png", ".jpg", "jpeg" };
+		private readonly string[] allowedExtensions = { ".png", ".jpg", ".jpeg" };
 		protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
 		{
 			if (value is null)
