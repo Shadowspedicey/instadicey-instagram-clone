@@ -68,7 +68,7 @@ namespace InstagramClone.Controllers
 			return result.IsSuccess ? NoContent() : this.AppropriateResponseBasedOnResult(result);
 		}
 
-		[HttpPost("saved-posts/delete/{postID}")]
+		[HttpPost("saved-posts/remove/{postID}")]
 		public async Task<IActionResult> UnsavePost(string postID)
 		{
 			var result = await _userService.UnsavePost(User, postID);
