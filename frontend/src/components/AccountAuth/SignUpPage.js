@@ -3,6 +3,8 @@ import { Link, useHistory } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { startLoading, stopLoading } from "../../state/actions/isLoading";
 import { setUser } from "../../state/actions/currentUser";
+import * as signalR from "@microsoft/signalr";
+import jwt from "jsonwebtoken";
 import ErrorMsg from "./ErrorMsg";
 import nameLogo from "../../assets/namelogo.png";
 import emailVerificationIcon from "../../assets/misc/email-verification.png";
@@ -22,11 +24,9 @@ const SignUpPage = () =>
 
 	const [isInfoValid, setInfoValid] = useState(false);
 	const [emailVerificationTime, setEmailVerificationTime] = useState(false);
-	const [verificationInterval, setVerificationInterval] = useState();
 	const [errorMsg, setErrorMsg] = useState(null);
 
 	useEffect(() => document.title = "Sign Up • Instadicey", []);
-	useEffect(() => () => clearInterval(verificationInterval));
 
 	const checkEmail = () =>
 	{
@@ -85,7 +85,32 @@ const SignUpPage = () =>
 				throw new Error(resultBody.detail, {cause: resultBody.errors});
 			}
 			setEmailVerificationTime(true);
-			//runEmailVerification(info);
+
+			const connection = new signalR.HubConnectionBuilder().withUrl(`${backend}/email-verification-hub`).withAutomaticReconnect().build();
+			await connection.start();
+			await connection.invoke("RegisterUserWithEmail", email);
+			connection.on("VerifyEmail", async () => {
+				dispatch(startLoading());
+				// Log in
+				const result = await fetch(`${backend}/auth/login`, {
+					method: "POST",
+					body: JSON.stringify({
+						email,
+						password
+					}),
+					headers: {
+						"Content-Type": "application/json"
+					}
+				});
+				if (result.ok) {
+					const resultJSON = await result.json();
+					localStorage.setItem("token", resultJSON.token);
+					const claims = jwt.decode(resultJSON.token);
+					dispatch(setUser(claims));
+				}
+				history.push("/");
+				dispatch(stopLoading());
+			});
 		} catch (err)
 		{
 			console.log(err);
@@ -105,20 +130,6 @@ const SignUpPage = () =>
 	};
 
 	useEffect(() => dispatch(stopLoading()), [dispatch]);
-
-	// Runs after checking user info on sign up
-	const runEmailVerification = (info) =>
-	{
-		setVerificationInterval(setInterval(async () =>
-		{
-			// TODO: Check if email was verified
-			// if (currentUser.emailVerified)
-			// {
-			// 	// dispatch(setUser({user: auth.currentUser, info}));
-			// 	history.push("");
-			// };
-		}, 5000));
-	};
 
 	if (!emailVerificationTime)
 		return(

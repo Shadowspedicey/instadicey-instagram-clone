@@ -1,6 +1,7 @@
 using InstagramClone.Authorization;
 using InstagramClone.Data;
 using InstagramClone.Data.Entities;
+using InstagramClone.Hubs;
 using InstagramClone.Interfaces;
 using InstagramClone.Services;
 using InstagramClone.Utils;
@@ -50,7 +51,7 @@ builder.Services.AddAuthorization(options =>
 	options.AddPolicy("CanDeleteComment", policyBuilder =>
 	{
 		policyBuilder.AddRequirements(new IsCommentOrPostOwnerRequirement());
-});
+	});
 });
 builder.Services.AddIdentityCore<User>(options =>
 {
@@ -70,12 +71,20 @@ builder.Services.AddIdentityCore<User>(options =>
 })
 	.AddEntityFrameworkStores<AppDbContext>()
 	.AddDefaultTokenProviders();
-builder.Services.AddCors(corsBuilder => corsBuilder.AddPolicy("Default", policy =>
+builder.Services.AddCors(corsBuilder =>
 {
 	string frontendOrigin = builder.Configuration["FrontendOrigin"]!;
-	policy.WithOrigins(frontendOrigin).WithMethods("GET", "POST").WithHeaders("Content-Type");
-}));
+	corsBuilder.AddPolicy("Default", policy =>
+	{
+		policy
+			.WithOrigins(frontendOrigin)
+			.WithMethods("GET", "POST")
+			.WithHeaders("Content-Type", "Authorization");
+	});
+	corsBuilder.AddPolicy("Hub", policy => policy.WithOrigins(frontendOrigin).AllowAnyHeader().AllowAnyMethod().AllowCredentials());
+});
 builder.Services.AddHealthChecks();
+builder.Services.AddSignalR();
 
 // Services
 builder.Services.AddScoped<AuthService>();
@@ -85,6 +94,7 @@ builder.Services.AddSingleton<IFileService, FileService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<ILikeService, LikeService>();
+builder.Services.AddSingleton<UserConnectionManager>();
 
 // Authorization handlers
 builder.Services.AddSingleton<IAuthorizationHandler, IsPostOwnerHandler>();
@@ -104,6 +114,7 @@ app.UseHealthChecks("/ping");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<AuthHub>("/email-verification-hub").RequireCors("Hub");
 
 
 app.Run();

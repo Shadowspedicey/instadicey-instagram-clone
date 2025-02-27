@@ -1,7 +1,9 @@
 ﻿using InstagramClone.Data.Entities;
 using InstagramClone.DTOs.Authentication;
+using InstagramClone.Hubs;
 using InstagramClone.Interfaces;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
@@ -12,11 +14,15 @@ namespace InstagramClone.Services
 	public class AuthService(
 		IConfiguration configuration,
 		UserManager<User>? userManager = null,
-		IEmailSender? emailSender = null)
+		IEmailSender? emailSender = null,
+		IHubContext<AuthHub>? authHub = null,
+		UserConnectionManager? connections = null)
 	{
 		private readonly IConfiguration _configuration = configuration;
 		private readonly UserManager<User> _userManager = userManager;
 		private readonly IEmailSender _emailSender = emailSender;
+		private readonly IHubContext<AuthHub> _authHub = authHub;
+		private readonly UserConnectionManager _connections = connections;
 
 		public async Task<IdentityResult> RegisterUser(UserRegisterDTO userData)
 		{
@@ -88,6 +94,12 @@ namespace InstagramClone.Services
 				return IdentityResult.Failed(new IdentityError() { Code = "UserNotFound" });
 
 			var result = await _userManager.ConfirmEmailAsync(user, encodedToken);
+			if (result.Succeeded)
+			{
+				string? connectionID = _connections.GetConnection(email);
+				if (connectionID is not null)
+					await _authHub.Clients.Client(connectionID).SendAsync("VerifyEmail");
+			}
 			return result;
 		}
 

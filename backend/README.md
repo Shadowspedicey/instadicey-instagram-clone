@@ -26,3 +26,5 @@ This ERD was made using [ERDPlus](https://erdplus.com/).
 ✅ Testing - Used xUnit for unit tests, and Sqlite (in-memory) for integration tests
 
 ✅ AES Encryption - Encryptes file paths so that the paths are not exposed when being retreived
+
+✅ SignalR - Real-time messaging
