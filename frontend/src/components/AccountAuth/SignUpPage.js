@@ -105,6 +105,7 @@ const SignUpPage = () =>
 				if (result.ok) {
 					const resultJSON = await result.json();
 					localStorage.setItem("token", resultJSON.token);
+					localStorage.setItem("refreshToken", resultJSON.refreshToken);
 					const claims = jwt.decode(resultJSON.token);
 					dispatch(setUser(claims));
 				}

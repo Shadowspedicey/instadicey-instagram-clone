@@ -5,7 +5,7 @@ import { Snackbar, Slide, Alert } from "@mui/material";
 import { stopLoading } from "./state/actions/isLoading";
 import { setUser } from "./state/actions/currentUser";
 import jwt from "jsonwebtoken";
-import { closeSnackbar } from "./state/actions/snackbar";
+import { closeSnackbar, setSnackbar } from "./state/actions/snackbar";
 
 import Navbar from "./components/Navbar";
 import LoadingPage from "./components/LoadingPage";
@@ -25,10 +25,13 @@ import Inbox from "./components/Inbox/Inbox";
 
 import BrokenPage from "./components/BrokenPage";
 import "./styles/App.css";
+import { refreshOrLogout } from "./helpers";
+import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 
 const App = () =>
 {
 	const dispatch = useDispatch();
+	const history = useHistory();
 	const location = useLocation();
 	const [navbarVisibility, setNavbarVisibility] = useState(true);
 	const isLoggedIn = useSelector(state => state.currentUser);
@@ -54,6 +57,22 @@ const App = () =>
 		}
 	};
 	useEffect(checkIfLoggedIn, [dispatch]);
+	useEffect(() =>
+	{
+		// 5 min interval
+		if (isLoggedIn)
+		{
+			const refreshTokenInterval = setInterval(async () => {
+				try {
+					await refreshOrLogout(dispatch, history);
+				} catch(err) {
+					if (err.message.includes("Failed to fetch"))
+						dispatch(setSnackbar("Server is down.", "error"));
+				}
+			}, 4*60*1000);
+			return () => clearInterval(refreshTokenInterval);
+		}
+	}, [isLoggedIn]);
 
 	return (
 		<div className="App" style={isLoggedIn && navbarVisibility ? { paddingTop: "75px" } : null}>

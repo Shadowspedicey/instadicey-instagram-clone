@@ -76,6 +76,7 @@ const LoginPage = () =>
 				throw new Error(resultJSON.detail, {cause: resultJSON.errors});
 
 			localStorage.setItem("token", resultJSON.token);
+			localStorage.setItem("refreshToken", resultJSON.refreshToken);
 			const claims = jwt.decode(resultJSON.token);
 			dispatch(setUser(claims));
 
