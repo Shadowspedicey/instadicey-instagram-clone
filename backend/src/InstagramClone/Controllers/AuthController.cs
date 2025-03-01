@@ -67,7 +67,27 @@ namespace InstagramClone.Controllers
 			}
 
 			var token = _authService.GenerateToken(DownloadFileEndpoint, user);
-			return Ok(new { token });
+			var refreshToken = await _authService.GenerateRefreshToken(user!);
+			return Ok(new { token, refreshToken = refreshToken.Token });
+		}
+
+		[HttpPost("login/refresh")]
+		public async Task<IActionResult> RefreshToken(string rt)
+		{
+			var (result, user) = await _authService.RefreshToken(rt);
+			if (!result.Succeeded)
+			{
+				if (result.Errors.Any(e => e.Code == "NotFound"))
+					return this.ProblemWithErrors(statusCode: 404, detail: result.Errors.First().Description, errors: result.Errors);
+				else if (result.Errors.Any(e => e.Code == "TokenExpired"))
+					return this.ProblemWithErrors(statusCode: 401, detail: result.Errors.First().Description, errors: result.Errors);
+				else
+					return this.ProblemWithErrors(statusCode: 400, detail: result.Errors.First().Description, errors: result.Errors);
+			}
+
+			var token = _authService.GenerateToken(DownloadFileEndpoint, user);
+			var refreshToken = await _authService.GenerateRefreshToken(user!);
+			return Ok(new { token, refreshToken = refreshToken.Token });
 		}
 	}
 }

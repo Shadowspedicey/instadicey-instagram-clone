@@ -1,25 +1,30 @@
-﻿using InstagramClone.Data.Entities;
+﻿using InstagramClone.Data;
+using InstagramClone.Data.Entities;
 using InstagramClone.DTOs.Authentication;
 using InstagramClone.Hubs;
 using InstagramClone.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Security.Claims;
+using System.Security.Cryptography;
 
 namespace InstagramClone.Services
 {
 	public class AuthService(
 		IConfiguration configuration,
 		UserManager<User>? userManager = null,
+		AppDbContext? dbContext = null,
 		IEmailSender? emailSender = null,
 		IHubContext<AuthHub>? authHub = null,
 		UserConnectionManager? connections = null)
 	{
 		private readonly IConfiguration _configuration = configuration;
 		private readonly UserManager<User> _userManager = userManager;
+		private readonly AppDbContext _dbContext = dbContext;
 		private readonly IEmailSender _emailSender = emailSender;
 		private readonly IHubContext<AuthHub> _authHub = authHub;
 		private readonly UserConnectionManager _connections = connections;
@@ -103,6 +108,18 @@ namespace InstagramClone.Services
 			return result;
 		}
 
+		public async Task<(IdentityResult, User?)> RefreshToken(string token)
+		{
+			var refreshToken = await _dbContext.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == token);
+			if (refreshToken is null)
+				return (IdentityResult.Failed(new IdentityError() { Code = "NotFound", Description = "Refresh token doesn't exist." }), null);
+
+			if (refreshToken.ExpiresAt < DateTime.UtcNow)
+				return (IdentityResult.Failed(new IdentityError() { Code = "TokenExpired", Description = "Refresh token expired. Please login again." }), null);
+
+			return (IdentityResult.Success, refreshToken.User);
+		}
+
 		public string GenerateToken(string downloadFileEndpoint = "", User? user = null)
 		{
 			var securityKey = new SymmetricSecurityKey(Convert.FromBase64String(_configuration["Authentication:Schemes:Bearer:SigningKeys:1:Value"]));
@@ -127,11 +144,30 @@ namespace InstagramClone.Services
 			(
 				signingCredentials: signingCredentials,
 				claims: claims,
-				expires: DateTime.Now.AddDays(1)
+				expires: DateTime.UtcNow.AddMinutes(5)
 			);
 
 			var tokenHandler = new JwtSecurityTokenHandler();
 			return tokenHandler.WriteToken(secToken);
+		}
+
+		public async Task<RefreshToken> GenerateRefreshToken(User user)
+		{
+			string token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+
+			var refreshToken = await _dbContext.RefreshTokens.FirstOrDefaultAsync(rt => rt.User.Id == user.Id);
+
+			if (refreshToken is null)
+			{
+				refreshToken = new() { Token = token, User = user };
+				_dbContext.Add(refreshToken);
+			}
+			else
+				refreshToken.Token = token;
+			refreshToken.ExpiresAt = DateTime.UtcNow.AddDays(3);
+
+			await _dbContext.SaveChangesAsync();
+			return refreshToken;
 		}
 	}
 }

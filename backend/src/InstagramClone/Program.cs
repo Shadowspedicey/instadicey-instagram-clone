@@ -20,6 +20,7 @@ var jwtValidationParameters = new TokenValidationParameters
 	ValidateIssuer = false,
 	ValidateAudience = false,
 	ValidateIssuerSigningKey = true,
+	ClockSkew = TimeSpan.Zero,
 	IssuerSigningKeys = new List<SecurityKey>
 	{
 		new SymmetricSecurityKey(Convert.FromBase64String(signingKeys[0]["Value"])),

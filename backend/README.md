@@ -15,7 +15,9 @@ This ERD was made using [ERDPlus](https://erdplus.com/).
 # Features
 ✅ SQL Server - Data storage
 
-✅ JWT tokens - Generates and validates JWTs to use for authentication
+✅ JWT tokens - Generates and validates short-lasting JWTs to use for authentication
+
+✅ Refresh tokens - Uses long-lasting refresh tokens to allow for a smoother user experience while ensuring security
 
 ✅ ASP.NET Identity - Account management (authorization, authentication)
 

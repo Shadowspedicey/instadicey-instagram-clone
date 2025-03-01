@@ -9,6 +9,7 @@ namespace InstagramClone.Data
 		public DbSet<Post> Posts { get; set; }
 		public DbSet<Comment> Comments { get; set; }
 		public DbSet<UserSearch> UserSearches { get; set; }
+		public DbSet<RefreshToken> RefreshTokens { get; set; }
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
@@ -76,6 +77,14 @@ namespace InstagramClone.Data
 						e.Property("FollowersId").HasColumnName("UserID");
 						e.Property("FollowingId").HasColumnName("FollowedUserID");
 					});
+			});
+
+			modelBuilder.Entity<RefreshToken>(RT =>
+			{
+				RT.HasKey(rt => new { rt.UserID });
+				RT.HasOne(rt => rt.User).WithOne();
+				RT.Property(rt => rt.Token).HasMaxLength(45);
+				RT.HasIndex(rt => rt.Token).IsUnique();
 			});
 
 			modelBuilder.Entity<UserSearch>(US =>
