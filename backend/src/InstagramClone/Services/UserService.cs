@@ -28,7 +28,7 @@ namespace InstagramClone.Services
 			return Result.Ok(user);
 		}
 
-		public async Task<Result> EditUserData(ClaimsPrincipal currentUserPrincipal, UserEditDTO userDataDTO, CancellationToken cancellationToken)
+		public async Task<Result> EditUserData(ClaimsPrincipal currentUserPrincipal, UserEditDTO userDataDTO)
 		{
 			User currentUser = (await _dbContext.Users.FindAsync(currentUserPrincipal.FindFirstValue("sub")))!;
 
@@ -40,8 +40,6 @@ namespace InstagramClone.Services
 				errors.AddRange((await ChangeRealName(currentUser, userDataDTO.RealName)).Errors);
 			if (currentUser.Bio != userDataDTO.Bio)
 				errors.AddRange((await ChangeBio(currentUser, userDataDTO.Bio)).Errors);
-			if (userDataDTO.NewProfilePic is not null)
-				errors.AddRange((await ChangeProfilePic(currentUser, userDataDTO.NewProfilePic, cancellationToken)).Errors);
 
 			return errors.Count == 0 ? Result.Ok() : Result.Fail(errors);
 		}
@@ -78,14 +76,23 @@ namespace InstagramClone.Services
 			return Result.Ok();
 		}
 
-		public async Task<Result> ChangeProfilePic(User currentUser, IFormFile? newProfilePic, CancellationToken cancellationToken)
+		public async Task<Result> ChangeProfilePic(ClaimsPrincipal currentUserPrincipal, IFormFile? newProfilePic, CancellationToken cancellationToken)
 		{
+			User currentUser = (await _dbContext.Users.FindAsync(currentUserPrincipal.FindFirstValue("sub")))!;
 			string filePath = await _fileService.SaveFile(newProfilePic!, currentUser.Id, $"ProfilePic{Path.GetExtension(newProfilePic!.FileName)}", cancellationToken);
 			string encryptedFilePath = Helpers.Encryption.Encrypt(filePath);
 
 			currentUser.ProfilePic = encryptedFilePath;
+			await _dbContext.SaveChangesAsync();
 			return Result.Ok();
+		}
 
+		public async Task<Result> ResetProfilePic(ClaimsPrincipal currentUserPrincipal)
+		{
+			User currentUser = (await _dbContext.Users.FindAsync(currentUserPrincipal.FindFirstValue("sub")))!;
+			currentUser.ProfilePic = _dbContext.Model.FindEntityType(typeof(User))!.FindProperty(nameof(User.ProfilePic))!.GetDefaultValue()!.ToString();
+			await _dbContext.SaveChangesAsync();
+			return Result.Ok();
 		}
 
 

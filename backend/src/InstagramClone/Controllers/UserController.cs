@@ -4,6 +4,7 @@ using InstagramClone.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using InstagramClone.Filters;
+using InstagramClone.Data.Annotations;
 
 namespace InstagramClone.Controllers
 {
@@ -26,12 +27,27 @@ namespace InstagramClone.Controllers
 
 		[EditDTOUsernameLowercaseFilter]
 		[HttpPost("edit")]
-		public async Task<IActionResult> Edit(UserEditDTO userData, CancellationToken cancellationToken)
+		public async Task<IActionResult> Edit(UserEditDTO userData)
 		{
-			var result = await _userService.EditUserData(User, userData, cancellationToken);
+			var result = await _userService.EditUserData(User, userData);
 
 			return result.IsSuccess ? NoContent() : this.AppropriateResponseBasedOnResult(result);
+		}
 
+		[HttpPost("edit/profile-pic")]
+		public async Task<IActionResult> UpdateProfilePic([MaxFileSize(10)] [ImageOnly] IFormFile newProfilePic, CancellationToken cancellationToken)
+		{
+			var result = await _userService.ChangeProfilePic(User, newProfilePic, cancellationToken);
+
+			return result.IsSuccess ? NoContent() : this.AppropriateResponseBasedOnResult(result);
+		}
+
+		[HttpPost("edit/profile-pic/reset")]
+		public async Task<IActionResult> ResetProfilePic()
+		{
+			var result = await _userService.ResetProfilePic(User);
+
+			return result.IsSuccess ? NoContent() : this.AppropriateResponseBasedOnResult(result);
 		}
 
 		[HttpPost("follow/{username}")]

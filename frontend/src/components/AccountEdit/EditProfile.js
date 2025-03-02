@@ -4,10 +4,14 @@ import { setSnackbar } from "../../state/actions/snackbar";
 import { setUser } from "../../state/actions/currentUser";
 import LoadingPage from "../LoadingPage";
 import Loading from "../../assets/misc/loading.jpg";
+import { backend } from "../../config";
+import { logOut, refreshOrLogout } from "../../helpers";
+import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 
 const EditProfile = () =>
 {
 	const dispatch = useDispatch();
+	const history = useHistory();
 	const currentUser = useSelector(state => state.currentUser);
 	const [isInfoValid, setIsInfoValid] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
@@ -21,14 +25,31 @@ const EditProfile = () =>
 	const emailRef = useRef();
 	const confirmPasswordRef = useRef();
 
-	const openPhotoBox = () => currentUser.info.defaultProfilePic ? openPhotoUpload() : setIsPhotoChangerBoxOpen(true);
+	const openPhotoBox = () => setIsPhotoChangerBoxOpen(true);
 	const closePhotoBox = () => setIsPhotoChangerBoxOpen(false);
 	const removePhoto = async () =>
 	{
 		closePhotoBox();
 		setIsPhotoLoading(true);
-		// TODO: Set the user's picture to "https://firebasestorage.googleapis.com/v0/b/instadicey.appspot.com/o/default%2FprofilePic.jpg?alt=media&token=3ac835a3-016e-470a-b7b3-f898d82cdbde" and the defaultProfilePic: true
-		await updateUserLocally();
+		try {
+			const result = await fetch(`${backend}/user/edit/profile-pic/reset`, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${localStorage.token}`
+				}
+			});
+			if (result.status === 401)
+				return logOut(dispatch, history);
+
+			if (!result.ok)
+			{
+				const resultJSON = await result.json();
+				throw new Error(resultJSON.detail, { cause: resultJSON.errors });
+			}
+			await updateUserLocally();
+		} catch(err) {
+			dispatch(setSnackbar(err.message, "error"));
+		}
 		setIsPhotoLoading(false);
 	};
 	const openPhotoUpload = () => uploadRef.current.click();
@@ -44,7 +65,24 @@ const EditProfile = () =>
 			  throw new Error("Not a supported photo format");
 			closePhotoBox();
 			setIsPhotoLoading(true);
-			// TODO: Upload the picture to the server's storage and update the user's data with the new pic URL
+
+			const form = new FormData();
+			form.append("newProfilePic", uploadedPhoto);
+			const result = await fetch(`${backend}/user/edit/profile-pic`, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${localStorage.token}`
+				},
+				body: form
+			});
+			if (result.status === 401)
+				return logOut(dispatch, history);
+			if (!result.ok)
+			{
+				const resultJSON = await result.json();
+				throw new Error(resultJSON.detail, { cause: resultJSON.errors });
+			}
+	
 			await updateUserLocally();
 			uploadRef.current.value = "";
 			setIsPhotoLoading(false);
@@ -133,10 +171,7 @@ const EditProfile = () =>
 		setIsLoading(false);
 	};
 
-	const updateUserLocally = async () =>
-	{
-		// TODO
-	};
+	const updateUserLocally = async () => await refreshOrLogout(dispatch, history);
 
 	if (!currentUser) return <LoadingPage/>;
 	return(
@@ -154,11 +189,11 @@ const EditProfile = () =>
 			<div className="element profile-pic-container">
 				<div className="img-container outlined left" onClick={openPhotoBox}>
 					{ isPhotoLoading && <div className="loading"><img src={Loading} alt="loading"></img></div>}
-					<img src={currentUser.info.profilePic} alt={`${currentUser.info.username}'s profile pic'`}></img>
+					<img src={currentUser.profilePic} alt={`${currentUser.username}'s profile pic'`}></img>
 					<input id="photo" type="file" accept="image/png, image/jpg, image/jpeg, image/pjpeg, image/jfif, image/pjp" style={{display: "none"}} ref={uploadRef} onChange={uploadPhoto}></input>
 				</div>
 				<div className="right">
-					{currentUser.info.username}
+					{currentUser.username}
 					<button className="text" onClick={openPhotoBox}>Change Profile Photo</button>
 				</div>
 			</div>
@@ -166,20 +201,20 @@ const EditProfile = () =>
 				<div className="element">
 					<label htmlFor="name" className="left">Name</label>
 					<div className="right">
-						<input type="text" id="name" defaultValue={currentUser.info.realName} placeholder="Name" ref={nameRef} className="outlined" onChange={handleChange}></input>
+						<input type="text" id="name" defaultValue={currentUser.realName} placeholder="Name" ref={nameRef} className="outlined" onChange={handleChange}></input>
 						<p>Help people discover your account by using the name you're known by: either your full name, nickname, or business name.</p>
 					</div>
 				</div>
 				<div className="element">
 					<label htmlFor="username" className="left">Username</label>
 					<div className="right">
-						<input type="text" id="username" defaultValue={currentUser.info.username} placeholder="Username" ref={usernameRef} className="outlined" onChange={handleChange}></input>
+						<input type="text" id="username" defaultValue={currentUser.username} placeholder="Username" ref={usernameRef} className="outlined" onChange={handleChange}></input>
 					</div>
 				</div>
 				<div className="element">
 					<label htmlFor="bio" className="left">Bio</label>
 					<div className="right">
-						<textarea id="bio" defaultValue={currentUser.info.bio} ref={bioRef} className="outlined" onChange={handleChange}></textarea>
+						<textarea id="bio" defaultValue={currentUser.bio} ref={bioRef} className="outlined" onChange={handleChange}></textarea>
 					</div>
 				</div>
 				<div className="element info">
@@ -192,8 +227,8 @@ const EditProfile = () =>
 				<div className="element">
 					<label htmlFor="email" className="left">Email</label>
 					<div className="right">
-						<input type="text" id="email" defaultValue={currentUser.user.email} placeholder="Email" ref={emailRef} className="outlined" onChange={handleChange}></input>
-						{ !emailRef.current || currentUser.user.email === emailRef.current.value
+						<input type="text" id="email" defaultValue={currentUser.email} placeholder="Email" ref={emailRef} className="outlined" onChange={handleChange}></input>
+						{ !emailRef.current || currentUser.email === emailRef.current.value
 							? null 
 							: <input type="password" id="password" placeholder="Confirm Password" ref={confirmPasswordRef} className="outlined"></input>
 						}

@@ -8,11 +8,12 @@ namespace InstagramClone.Interfaces
 	public interface IUserService
 	{
 		public Task<Result<User>> GetUser(string username);
-		public Task<Result> EditUserData(ClaimsPrincipal currentUserPrincipal, UserEditDTO userDataDTO, CancellationToken cancellationToken);
+		public Task<Result> EditUserData(ClaimsPrincipal currentUserPrincipal, UserEditDTO userDataDTO);
 		public Task<Result> ChangeUsername(User currentUser, string newUsername);
 		public Task<Result> ChangeRealName(User currentUser, string? newRealName);
 		public Task<Result> ChangeBio(User currentUser, string? newBio);
-		public Task<Result> ChangeProfilePic(User currentUser, IFormFile newProfilePic, CancellationToken cancellationToken);
+		public Task<Result> ChangeProfilePic(ClaimsPrincipal currentUserPrincipal, IFormFile newProfilePic, CancellationToken cancellationToken);
+		public Task<Result> ResetProfilePic(ClaimsPrincipal currentUserPrincipal);
 
 		public Task<Result> FollowUser(ClaimsPrincipal currentUserPrincipal, string usernameToFollow);
 		public Task<Result> UnfollowUser(ClaimsPrincipal currentUserPrincipal, string usernameToUnfollow);
