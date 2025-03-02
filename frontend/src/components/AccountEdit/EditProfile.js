@@ -1,7 +1,6 @@
 import { useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setSnackbar } from "../../state/actions/snackbar";
-import { setUser } from "../../state/actions/currentUser";
 import LoadingPage from "../LoadingPage";
 import Loading from "../../assets/misc/loading.jpg";
 import { backend } from "../../config";
@@ -100,26 +99,6 @@ const EditProfile = () =>
 
 	const handleChange = () => isInfoValid ? null : setIsInfoValid(true);
 
-	const handleNameChange = async realName =>
-	{
-		return realName;
-	};
-
-	const handleUsernameChange = async username =>
-	{
-		if (username.length > 20) throw new Error("Username too long");
-		if (username.trim() === "") throw new Error("Username not entered");
-		if (!username.match(/^[A-Za-z0-9]*$/)) throw new Error("Username not English");
-		// TODO: Try updating user's username (check if already taken)
-		return username;
-	};
-
-	const handleBioChange = async bio =>
-	{
-		if (bio.length > 150) throw new Error("Bio too long");
-		return bio;
-	};
-
 	const handleEmailChange = async (email, password) =>
 	{
 		if (email.trim() === "") throw new Error("Email can't be empty");
@@ -138,35 +117,46 @@ const EditProfile = () =>
 		setIsLoading(true);
 		try
 		{
-			let realName = currentUser.info.realName;
-			let username = currentUser.info.username;
-			let bio = currentUser.info.bio;
-			let email = currentUser.user.email;
+			let realName = nameRef.current.value;
+			let username = usernameRef.current.value;
+			let bio = bioRef.current.value;
+			//let email = currentUser.email;
 
-			if (realName !== nameRef.current.value) realName = await handleNameChange(nameRef.current.value);
-			if (username !== usernameRef.current.value) username = await handleUsernameChange(usernameRef.current.value);
-			if (bio !== bioRef.current.value) bio = await handleBioChange(bioRef.current.value);
-			if (email !== emailRef.current.value) email = await handleEmailChange(emailRef.current.value, confirmPasswordRef.current.value);
-
-			// TODO: Update the user's personal info (realName, username, bio)
-			if (currentUser.user.email !== email)
+			if (currentUser.username !== usernameRef.current.value)
 			{
-				try
-				{
-					// TODO: Update user's email and send verification
-				} catch (err) { throw new Error(err.code); }
+				if (username.length > 20) throw new Error("Username too long");
+				if (username.trim() === "") throw new Error("Username not entered");
+				if (!username.match(/^[A-Za-z0-9]*$/)) throw new Error("Username not English");
 			}
+			if (currentUser.bio !== bioRef.current.value)
+				if (bio.length > 150) throw new Error("Bio too long");
+			// if (email !== emailRef.current.value) email = await handleEmailChange(emailRef.current.value, confirmPasswordRef.current.value);
+
+			const result = await fetch(`${backend}/user/edit`, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${localStorage.token}`,
+					"Content-Type": "application/json"
+				},
+				body: JSON.stringify({
+					username: username,
+					realname: realName.trim().length === 0 ? null : realName,
+					bio: bio.trim().length === 0 ? null : bio
+				})
+			});
+			if (result.status === 401)
+				return logOut(dispatch, history);
+			if (!result.ok)
+			{
+				const resultJSON = await result.json();
+				throw new Error(resultJSON.detail, { cause: resultJSON.errors });
+			}
+			await updateUserLocally();
 			dispatch(setSnackbar("Info updated.", "success"));
-			window.location.reload(false);
 		} catch (err)
 		{
-			console.error(err.message);
-			setIsLoading(false);
-			// TODO: server-side error handling
-			// Example
-			// if (err.message === "auth/wrong-password")
-			// 	return dispatch(setSnackbar("Wrong password.", "error"));
-			dispatch(setSnackbar("Oops, please try again later.", "error"));
+			setIsInfoValid(false);
+			dispatch(setSnackbar(err.message ?? "Oops, please try again later.", "error"));
 		}
 		setIsLoading(false);
 	};
