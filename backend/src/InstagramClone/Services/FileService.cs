@@ -18,7 +18,7 @@ namespace InstagramClone.Services
 
 			string filePath = Path.Combine(uploadFolder, fileName);
 
-			using var stream = new FileStream(filePath, FileMode.CreateNew);
+			using var stream = new FileStream(filePath, FileMode.Create);
 			await file.CopyToAsync(stream, cancellationToken);
 
 			return Path.Combine(path, fileName);
