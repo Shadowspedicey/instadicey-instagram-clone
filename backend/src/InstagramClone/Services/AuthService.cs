@@ -137,7 +137,9 @@ namespace InstagramClone.Services
 						new("email", user.Email, ClaimValueTypes.Email),
 						new("profilePic", $"{downloadFileEndpoint}{user.ProfilePic}", ClaimTypes.Uri),
 						new("username", user.UserName),
-						new("isVerified", user.IsVerified.ToString(), ClaimValueTypes.Boolean)
+						new("isVerified", user.IsVerified.ToString(), ClaimValueTypes.Boolean),
+						new("realName", user.RealName ?? ""),
+						new("bio", user.Bio ?? "")
 					);
 
 			var secToken = new JwtSecurityToken
