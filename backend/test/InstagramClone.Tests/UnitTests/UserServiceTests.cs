@@ -110,6 +110,169 @@ namespace InstagramClone.Tests.UnitTests
 		}
 
 		[Fact]
+		public async Task SearchForUsers_ShouldReturnProperUsers2()
+		{
+			User anotherUser = new()
+			{
+				Email = "anotherexample@domain.com",
+				UserName = "anotheruser",
+				NormalizedUserName = "ANOTHERUSER",
+				IsVerified = false,
+				LastLogin = DateTime.UtcNow,
+				RecentSearches = [],
+				LikedPosts = [],
+				Following = [],
+				Followers = [],
+				CreatedAt = DateTime.UtcNow,
+			};
+			User friendlyUser = new()
+			{
+				Email = "friendlyuser@domain.com",
+				UserName = "frienuserdly",
+				NormalizedUserName = "FRIENUSERDLY",
+				IsVerified = false,
+				LastLogin = DateTime.UtcNow,
+				RecentSearches = [],
+				LikedPosts = [],
+				Following = [],
+				Followers = [],
+				CreatedAt = DateTime.UtcNow,
+			};
+			User randomGuy = new()
+			{
+				Email = "randomguy@domain.com",
+				UserName = "randomguy",
+				NormalizedUserName = "RANDOMGUY",
+				IsVerified = false,
+				LastLogin = DateTime.UtcNow,
+				RecentSearches = [],
+				LikedPosts = [],
+				Following = [],
+				Followers = [],
+				CreatedAt = DateTime.UtcNow,
+			};
+			await _dbContext.AddRangeAsync(anotherUser, friendlyUser, randomGuy);
+			await _dbContext.SaveChangesAsync();
+			UserService userService = new(_dbContext, null!, null!);
+
+			var result = await userService.SearchForUsers("guy");
+
+			Assert.True(result.IsSuccess);
+			var users = result.Value;
+			Assert.Single(users);
+			Assert.Contains(users, u => u.UserName == "randomguy");
+		}
+
+		[Fact]
+		public async Task SearchForUsers_ShouldReturnProperUsers3()
+		{
+			User anotherUser = new()
+			{
+				Email = "anotherexample@domain.com",
+				UserName = "anotheruser",
+				NormalizedUserName = "ANOTHERUSER",
+				IsVerified = false,
+				LastLogin = DateTime.UtcNow,
+				RecentSearches = [],
+				LikedPosts = [],
+				Following = [],
+				Followers = [],
+				CreatedAt = DateTime.UtcNow,
+			};
+			User friendlyUser = new()
+			{
+				Email = "friendlyuser@domain.com",
+				UserName = "frienuserdly",
+				NormalizedUserName = "FRIENUSERDLY",
+				IsVerified = false,
+				LastLogin = DateTime.UtcNow,
+				RecentSearches = [],
+				LikedPosts = [],
+				Following = [],
+				Followers = [],
+				CreatedAt = DateTime.UtcNow,
+			};
+			User randomGuy = new()
+			{
+				Email = "randomguy@domain.com",
+				UserName = "randomguy",
+				NormalizedUserName = "RANDOMGUY",
+				IsVerified = false,
+				LastLogin = DateTime.UtcNow,
+				RecentSearches = [],
+				LikedPosts = [],
+				Following = [],
+				Followers = [],
+				CreatedAt = DateTime.UtcNow,
+			};
+			await _dbContext.AddRangeAsync(anotherUser, friendlyUser, randomGuy);
+			await _dbContext.SaveChangesAsync();
+			UserService userService = new(_dbContext, null!, null!);
+
+			var result = await userService.SearchForUsers("usernae");
+
+			Assert.True(result.IsSuccess);
+			var users = result.Value;
+			Assert.Empty(users);
+		}
+
+		[Fact]
+		public async Task SearchForUsers_ShouldReturnProperUsers()
+		{
+			User anotherUser = new()
+			{
+				Email = "anotherexample@domain.com",
+				UserName = "anotheruser",
+				NormalizedUserName = "ANOTHERUSER",
+				IsVerified = false,
+				LastLogin = DateTime.UtcNow,
+				RecentSearches = [],
+				LikedPosts = [],
+				Following = [],
+				Followers = [],
+				CreatedAt = DateTime.UtcNow,
+			};
+			User friendlyUser = new()
+			{
+				Email = "friendlyuser@domain.com",
+				UserName = "frienuserdly",
+				NormalizedUserName = "FRIENUSERDLY",
+				IsVerified = false,
+				LastLogin = DateTime.UtcNow,
+				RecentSearches = [],
+				LikedPosts = [],
+				Following = [],
+				Followers = [],
+				CreatedAt = DateTime.UtcNow,
+			};
+			User randomGuy = new()
+			{
+				Email = "randomguy@domain.com",
+				UserName = "randomguy",
+				NormalizedUserName = "RANDOMGUY",
+				IsVerified = false,
+				LastLogin = DateTime.UtcNow,
+				RecentSearches = [],
+				LikedPosts = [],
+				Following = [],
+				Followers = [],
+				CreatedAt = DateTime.UtcNow,
+			};
+			await _dbContext.Users.AddRangeAsync(anotherUser, friendlyUser, randomGuy);
+			await _dbContext.SaveChangesAsync();
+			UserService userService = new(_dbContext, null!, null!);
+
+			var result = await userService.SearchForUsers("user");
+
+			Assert.True(result.IsSuccess);
+			var users = result.Value;
+			Assert.Equal(3, users.Count);
+			Assert.Contains(users, u => u.UserName == anotherUser.UserName);
+			Assert.Contains(users, u => u.UserName == friendlyUser.UserName);
+			Assert.Contains(users, u => u.UserName == _user.UserName);
+		}
+
+		[Fact]
 		public async Task ChangeUsername_ShouldUpdateUsername_WhenUsernameDoesntCollide()
 		{
 			await AddAnotherUser();

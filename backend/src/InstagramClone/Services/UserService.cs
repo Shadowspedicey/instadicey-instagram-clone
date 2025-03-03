@@ -28,6 +28,11 @@ namespace InstagramClone.Services
 			return Result.Ok(user);
 		}
 
+		public async Task<Result<ICollection<User>>> SearchForUsers(string searchTerm)
+		{
+			throw new NotImplementedException();
+		}
+
 		public async Task<Result> EditUserData(ClaimsPrincipal currentUserPrincipal, UserEditDTO userDataDTO)
 		{
 			User currentUser = (await _dbContext.Users.FindAsync(currentUserPrincipal.FindFirstValue("sub")))!;

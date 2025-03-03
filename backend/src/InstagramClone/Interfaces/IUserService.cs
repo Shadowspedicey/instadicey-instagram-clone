@@ -8,6 +8,7 @@ namespace InstagramClone.Interfaces
 	public interface IUserService
 	{
 		public Task<Result<User>> GetUser(string username);
+		public Task<Result<ICollection<User>>> SearchForUsers(string searchTerm);
 		public Task<Result> EditUserData(ClaimsPrincipal currentUserPrincipal, UserEditDTO userDataDTO);
 		public Task<Result> ChangeUsername(User currentUser, string newUsername);
 		public Task<Result> ChangeRealName(User currentUser, string? newRealName);
