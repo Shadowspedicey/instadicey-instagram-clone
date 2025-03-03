@@ -1,6 +1,7 @@
 ﻿using InstagramClone.DTOs.Authentication;
 using InstagramClone.Services;
 using InstagramClone.Utils;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace InstagramClone.Controllers
@@ -50,6 +51,26 @@ namespace InstagramClone.Controllers
 			}
 			else
 				return Ok();
+		}
+
+		[Authorize]
+		[HttpPost("send-email-change-verification")]
+		public async Task<IActionResult> SendEmailChangeRequest(EmailChangeDTO emailChangeDTO)
+		{
+			var result = await _authService.SendEmailChangeRequest(User, emailChangeDTO.Email, emailChangeDTO.Password);
+			if (!result.Succeeded)
+					return this.ProblemWithErrors(statusCode: 400, detail: result.Errors.First().Description, errors: result.Errors);
+			return NoContent();
+		}
+
+		[Authorize]
+		[HttpPost("confirm-email-change")]
+		public async Task<IActionResult> ConfirmEmailChange(string newEmail, string code)
+		{
+			var result = await _authService.ConfirmEmailChange(User, newEmail, code);
+			if (!result.Succeeded)
+					return this.ProblemWithErrors(statusCode: 400, detail: result.Errors.First().Description, errors: result.Errors);
+			return NoContent();
 		}
 
 		[HttpPost("login")]

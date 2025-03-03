@@ -3,6 +3,7 @@ using InstagramClone.Data.Entities;
 using InstagramClone.DTOs.Authentication;
 using InstagramClone.Hubs;
 using InstagramClone.Interfaces;
+using InstagramClone.Utils;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -102,6 +103,28 @@ namespace InstagramClone.Services
 				if (connectionID is not null)
 					await _authHub.Clients.Client(connectionID).SendAsync("VerifyEmail");
 			}
+			return result;
+		}
+
+		public async Task<IdentityResult> SendEmailChangeRequest(ClaimsPrincipal userClaimsPrinicipal, string newEmail, string password)
+		{
+			User user = (await _userManager.GetUserAsync(userClaimsPrinicipal))!;
+
+			bool passwordIsValid = await _userManager.CheckPasswordAsync(user, password);
+			if (!passwordIsValid)
+				return IdentityResult.Failed(new IdentityError() { Code = Enum.GetName(ErrorCode.InvalidCredentials)!, Description = "The password is incorrect."});
+
+			var token = await _userManager.GenerateChangeEmailTokenAsync(user, newEmail);
+
+			await _emailSender.SendAccountVerificationEmail(newEmail, token);
+			return IdentityResult.Success;
+		}
+
+		public async Task<IdentityResult> ConfirmEmailChange(ClaimsPrincipal userClaimsPrinciple, string newEmail, string token)
+		{
+			User user = (await _userManager.GetUserAsync(userClaimsPrinciple))!;
+			var result = await _userManager.ChangeEmailAsync(user, newEmail, token);
+
 			return result;
 		}
 
