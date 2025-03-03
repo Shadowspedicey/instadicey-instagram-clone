@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
+using System.Reflection.Metadata.Ecma335;
 using System.Security.Claims;
 using System.Security.Cryptography;
 
@@ -132,6 +133,37 @@ namespace InstagramClone.Services
 		{
 			User user = (await _userManager.GetUserAsync(userClaimsPrinciple))!;
 			return await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+		}
+
+		public async Task<IdentityResult> SendPasswordResetEmail(string email)
+		{
+			User? user = await _userManager.FindByEmailAsync(email);
+			if (user is null)
+				return IdentityResult.Failed(new IdentityError() { Code = Enum.GetName(ErrorCode.NotFound)!, Description = "User with provided email was not found." });
+
+			string token = await _userManager.GeneratePasswordResetTokenAsync(user);
+			await _emailSender.SendPasswordResetEmail(email, token);
+			return IdentityResult.Success;
+		}
+
+		public async Task<IdentityResult> CheckPasswordResetToken(string email, string token)
+		{
+			User? user = await _userManager.FindByEmailAsync(email);
+			if (user is null)
+				return IdentityResult.Failed(new IdentityError() { Code = Enum.GetName(ErrorCode.NotFound)!, Description = "User with provided email was not found." });
+
+			var result = await _userManager.VerifyUserTokenAsync(user, TokenOptions.DefaultProvider, UserManager<User>.ResetPasswordTokenPurpose, token);
+			return result ? IdentityResult.Success : IdentityResult.Failed(new IdentityError() { Code = Enum.GetName(ErrorCode.InvalidInput)!, Description = "Token is invalid."});
+		}
+
+		public async Task<IdentityResult> ResetPassword(string email, string token, string newPassword)
+		{
+			User? user = await _userManager.FindByEmailAsync(email);
+			if (user is null)
+				return IdentityResult.Failed(new IdentityError() { Code = Enum.GetName(ErrorCode.NotFound)!, Description = "User with provided email was not found." });
+
+			var result = await _userManager.ResetPasswordAsync(user, token, newPassword);
+			return result;
 		}
 
 		public async Task<(IdentityResult, User?)> RefreshToken(string token)

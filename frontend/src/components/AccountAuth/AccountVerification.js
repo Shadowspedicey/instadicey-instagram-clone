@@ -97,7 +97,21 @@ const AccountVerification = () =>
 		const newPassword = passwordRef.current.value;
 		try
 		{
-			// TODO: Reset the password with the provided new password
+			const result = await fetch(`${backend}/auth/password-reset`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json"
+				},
+				body: JSON.stringify({
+					email,
+					newPassword,
+					token
+				})
+			});
+			if (!result.ok) {
+				const resultJSON = await result.json();
+				throw new Error(resultJSON.detail);
+			}
 			setPasswordResetDone(true);
 			setStatus({
 				type: "password-reset",
@@ -105,7 +119,7 @@ const AccountVerification = () =>
 			});
 		} catch (err)
 		{
-			console.error("error with confirming password", err);
+			setErrorMsg(err.message ?? "An error occurred. Please, try again later.");
 			setStatus({
 				type: "password-reset",
 				ok: false,
@@ -117,16 +131,17 @@ const AccountVerification = () =>
 	{
 		try
 		{
-			// TODO: Check if the password reset request is valid (should return the email that requested the reset)
-			const email = null;
-			setPasswordResetEmail(email);
-		} catch (err)
-		{
-			console.error("Invalid code", err);
+			if (!email || !token)
+				throw new Error("Email or token missing.");
+			
+			const tokenCheckResult = await fetch(`${backend}/auth/check-password-reset-token?email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`, { method: "POST" });
+			if (!tokenCheckResult.ok) throw new Error("Token is invalid or user was not found.");
+		} catch (err) {
 			setStatus({
 				type: "password-reset",
 				ok: false,
 			});
+			setErrorMsg(err.message ?? "Please try to reset the password again.");
 		}
 		dispatch(stopLoading());
 	};
@@ -140,7 +155,7 @@ const AccountVerification = () =>
 				break;
 
 			case "resetPassword":
-				handlePasswordReset();
+				await handlePasswordReset();
 				break;
 
 			default:
@@ -162,7 +177,7 @@ const AccountVerification = () =>
 				<div className="icon"><img src={Logo} alt="logo"></img></div>
 				<div className="email-div">
 					<h2>Your Email:</h2>
-					<span>{passwordResetEmail}</span>
+					<span>{email}</span>
 				</div>
 				<form onSubmit={handleFormSubmitPassword}>
 					<input type="password" id="password" placeholder="Password (at least 6 characters)" ref={passwordRef} onChange={checkForm}></input>
@@ -209,7 +224,7 @@ const AccountVerification = () =>
 							?
 							<div className="text-div">
 								<h1>An error has occured</h1>
-								<p>Please try to reset the password again.</p>
+								<p>{errorMsg}</p>
 							</div>
 							: null
 				}

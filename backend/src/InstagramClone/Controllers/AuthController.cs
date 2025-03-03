@@ -83,6 +83,48 @@ namespace InstagramClone.Controllers
 			return NoContent();
 		}
 
+		[HttpPost("send-password-reset")]
+		public async Task<IActionResult> SendPasswordResetEmail(string email)
+		{
+			var result = await _authService.SendPasswordResetEmail(email);
+			if (!result.Succeeded)
+			{
+				if (result.Errors.Any(e => e.Code == Enum.GetName(ErrorCode.NotFound)))
+					return this.ProblemWithErrors(statusCode: 404, detail: result.Errors.First().Description, errors: result.Errors);
+				else
+					return this.ProblemWithErrors(statusCode: 400, detail: result.Errors.First().Description, errors: result.Errors);
+			}
+			return NoContent();
+		}
+
+		[HttpPost("check-password-reset-token")]
+		public async Task<IActionResult> CheckPasswordResetToken(string email, string token)
+		{
+			var result = await _authService.CheckPasswordResetToken(email, token);
+			if (!result.Succeeded)
+			{
+				if (result.Errors.Any(e => e.Code == Enum.GetName(ErrorCode.NotFound)))
+					return this.ProblemWithErrors(statusCode: 404, detail: result.Errors.First().Description, errors: result.Errors);
+				else
+					return this.ProblemWithErrors(statusCode: 400, detail: result.Errors.First().Description, errors: result.Errors);
+			}
+			return NoContent();
+		}
+
+		[HttpPost("password-reset")]
+		public async Task<IActionResult> ResetPassword(PasswordResetDTO passwordResetDTO)
+		{
+			var result = await _authService.ResetPassword(passwordResetDTO.Email, passwordResetDTO.Token, passwordResetDTO.NewPassword);
+			if (!result.Succeeded)
+			{
+				if (result.Errors.Any(e => e.Code == Enum.GetName(ErrorCode.NotFound)))
+					return this.ProblemWithErrors(statusCode: 404, detail: result.Errors.First().Description, errors: result.Errors);
+				else
+					return this.ProblemWithErrors(statusCode: 400, detail: result.Errors.First().Description, errors: result.Errors);
+			}
+			return NoContent();
+		}
+
 		[HttpPost("login")]
 		public async Task<IActionResult> Login(UserLoginDTO userLoginDTO)
 		{

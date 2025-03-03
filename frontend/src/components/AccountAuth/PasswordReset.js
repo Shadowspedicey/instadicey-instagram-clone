@@ -1,12 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import ErrorMsg from "./ErrorMsg";
 import Lock from "../../assets/misc/lock.png";
 import greenCheckmark from "../../assets/misc/green-checkmark.png";
+import { setUser } from "../../state/actions/currentUser";
+import { backend } from "../../config";
+import { startLoading, stopLoading } from "../../state/actions/isLoading";
 
 const PasswordReset = () =>
 {
+	const dispatch = useDispatch();
 	const currentUser = useSelector(state => state.currentUser);
 	const emailRef = useRef();
 	const [isInfoValid, setIsInfoValid] = useState(false);
@@ -14,6 +18,10 @@ const PasswordReset = () =>
 	const [errorMsg, setErrorMsg] = useState(null);
 
 	useEffect(() => document.title = "Reset Password • Instadicey", []);
+	useEffect(() => {
+		localStorage.removeItem("token");
+		dispatch(setUser(null));
+	}, []);
 
 	const checkEmail = () =>
 	{
@@ -25,24 +33,27 @@ const PasswordReset = () =>
 		else return setIsInfoValid(true);
 	};
 
-	const handleSubmit = async e =>
-	{
+	const handleSubmit = async e => {
 		e.preventDefault();
 		if (!isInfoValid) return;
 
 		const email = emailRef.current.value;
-		try
-		{
+		dispatch(startLoading());
+		try {
 			setErrorMsg(null);
-			// TODO: Send password reset email
+			const encodedEmail = encodeURIComponent(email);
+			const result = await fetch(`${backend}/auth/send-password-reset?email=${encodedEmail}`, {
+				method: "POST"
+			});
+			if (!result.ok) {
+				const resultJSON = await result.json();
+				throw new Error(resultJSON.detail);
+			}
 			setIsEmailSent(true);
+		} catch (err) {
+			setErrorMsg(err.message ?? "An error occurred");
 		}
-		catch (err)
-		{
-			// TODO: if (err.code === "auth/user-not-found")
-			// 	setErrorMsg("User not found");
-			console.error("Error with password reset", err);
-		}
+		dispatch(stopLoading());
 	};
 
 	if (isEmailSent)
