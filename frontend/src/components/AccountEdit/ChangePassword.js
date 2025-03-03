@@ -1,14 +1,18 @@
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { backend } from "../../config.js";
+import { logOut } from "../../helpers.js";
 import LoadingPage from "../LoadingPage";
 import { setSnackbar } from "../../state/actions/snackbar";
 import Loading from "../../assets/misc/loading.jpg";
+import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 
 const ChangePassword = () =>
 {
-	const currentUser = useSelector(state => state.currentUser);
 	const dispatch = useDispatch();
+	const history = useHistory();
+	const currentUser = useSelector(state => state.currentUser);
 	const [isInfoValid, setIsInfoValid] = useState(null);
 	const [isLoading, setIsLoading] = useState(null);
 
@@ -37,25 +41,32 @@ const ChangePassword = () =>
 			if (newPassword !== confirmPassword) throw new Error("Password don't match");
 			if (newPassword.length < 6) throw new Error("Password too short");
 
-			try
-			{
-				// TODO: Update user password
-				dispatch(setSnackbar("Password updated successfully.", "success"));
-				window.location.reload(false);
-			} catch (err) { throw new Error(err.code); }
-			setIsLoading(false);
+			const result = await fetch(`${backend}/auth/change-password`, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${localStorage.token}`,
+					"Content-Type": "application/json"
+				},
+				body: JSON.stringify({
+					currentPassword: oldPassword,
+					newPassword: newPassword
+				})
+			});
+			if (result.status === 401)
+				return logOut(dispatch, history);
+			if (!result.ok) {
+				const resultJSON = await result.json();
+				throw new Error(resultJSON.detail);
+			}
+			dispatch(setSnackbar("Password updated successfully.", "success"));
 		} catch(err)
 		{
-			setIsLoading(false);
-			console.error(err.message);
-			if (err.message === "Password don't match")
-				return dispatch(setSnackbar("Please make sure both password match.", "error"));
-			if (err.message === "Password too short")
-				return dispatch(setSnackbar("Password is too short. minimum is 6 characters.", "error"));
-			if (err.message === "auth/wrong-password")
-				return dispatch(setSnackbar("Your old password is not correct.", "error"));
-			dispatch(setSnackbar("Oops, please try again later.", "error"));
+			dispatch(setSnackbar(err.message ?? "Oops, please try again later.", "error"));
 		}
+		oldPasswordRef.current.value = "";
+		newPasswordRef.current.value = "";
+		confirmPasswordRef.current.value = "";
+		setIsLoading(false);
 	};
 
 	if (!currentUser) return <LoadingPage/>;
@@ -63,10 +74,10 @@ const ChangePassword = () =>
 		<div className="account-element change-password">
 			<div className="element profile-pic-container">
 				<div className="img-container outlined left">
-					<img src={currentUser.info.profilePic} alt={`${currentUser.info.username}'s profile pic'`}></img>
+					<img src={currentUser.profilePic} alt={`${currentUser.username}'s profile pic'`}></img>
 				</div>
 				<div className="right">
-					{currentUser.info.username}
+					{currentUser.username}
 				</div>
 			</div>
 			<form onSubmit={handleSubmit}>

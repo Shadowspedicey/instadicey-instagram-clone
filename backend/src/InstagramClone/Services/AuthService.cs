@@ -128,6 +128,12 @@ namespace InstagramClone.Services
 			return result;
 		}
 
+		public async Task<IdentityResult> ChangePassword(ClaimsPrincipal userClaimsPrinciple, string currentPassword, string newPassword)
+		{
+			User user = (await _userManager.GetUserAsync(userClaimsPrinciple))!;
+			return await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+		}
+
 		public async Task<(IdentityResult, User?)> RefreshToken(string token)
 		{
 			var refreshToken = await _dbContext.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == token);

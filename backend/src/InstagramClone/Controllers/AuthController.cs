@@ -73,6 +73,16 @@ namespace InstagramClone.Controllers
 			return NoContent();
 		}
 
+		[Authorize]
+		[HttpPost("change-password")]
+		public async Task<IActionResult> ChangePassword(PasswordChangeDTO passwordChangeDTO)
+		{
+			var result = await _authService.ChangePassword(User, passwordChangeDTO.CurrentPassword, passwordChangeDTO.NewPassword);
+			if (!result.Succeeded)
+				return this.ProblemWithErrors(statusCode: 400, detail: result.Errors.First().Description, errors: result.Errors);
+			return NoContent();
+		}
+
 		[HttpPost("login")]
 		public async Task<IActionResult> Login(UserLoginDTO userLoginDTO)
 		{
