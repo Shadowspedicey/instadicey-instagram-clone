@@ -1,17 +1,19 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useRef, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { startLoading, stopLoading } from "../../state/actions/isLoading";
 import Logo from "../../assets/logo.png";
 import greenCheckmark from "../../assets/misc/green-checkmark.png";
 import redX from "../../assets/misc/red-x.png";
 import { backend } from "../../config";
 import { setSnackbar } from "../../state/actions/snackbar";
-import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
+import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
+import { logOut, refreshOrLogout } from "../../helpers";
 
 const AccountVerification = () =>
 {
 	const dispatch = useDispatch();
+	const history = useHistory();
 	const {search} = useLocation();
 	const params = new URLSearchParams(search);
 	const mode = params.get("mode");
@@ -34,9 +36,20 @@ const AccountVerification = () =>
 		{
 			if (!email || !token)
 				throw new Error("Email or token missing.");
-
-			console.log(encodeURIComponent(token));
-			const result = await fetch(`${backend}/auth/confirm-email?encodedEmail=${encodeURIComponent(email)}&code=${encodeURIComponent(token)}`, {method: "POST"});
+			var result;
+			if (localStorage.token) {
+				result = await fetch(`${backend}/auth/confirm-email-change?newEmail=${encodeURIComponent(email)}&code=${encodeURIComponent(token)}`, {
+					method: "POST",
+					headers: {
+						Authorization: `Bearer ${localStorage.token}`
+					}
+				});
+				if (result.status === 401)
+					return logOut(dispatch, history);
+				await refreshOrLogout(dispatch, history);
+			}
+			else
+				result = await fetch(`${backend}/auth/confirm-email?encodedEmail=${encodeURIComponent(email)}&code=${encodeURIComponent(token)}`, {method: "POST"});
 			if (!result.ok) {
 				const resultJSON = await result.json();
 				throw new Error(resultJSON.detail, {cause: resultJSON.errors});
@@ -138,10 +151,6 @@ const AccountVerification = () =>
 	useEffect(() =>
 	{
 		dispatch(startLoading());
-		console.log(mode);
-		// setMode(getParameterByName("mode"));
-		// setEmail(getParameterByName("user"));
-		// setToken(getParameterByName("token"));
 		handleLink();
 	}, [mode]);
 

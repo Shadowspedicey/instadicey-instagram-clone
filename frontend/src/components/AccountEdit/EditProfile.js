@@ -13,7 +13,9 @@ const EditProfile = () =>
 	const history = useHistory();
 	const currentUser = useSelector(state => state.currentUser);
 	const [isInfoValid, setIsInfoValid] = useState(false);
-	const [isLoading, setIsLoading] = useState(false);
+	const [isEmailValid, setIsEmailValid] = useState(false);
+	const [isLoadingInfo, setIsLoadingInfo] = useState(false);
+	const [isLoadingEmail, setIsLoadingEmail] = useState(false);
 	const [isPhotoLoading, setIsPhotoLoading] = useState(false);
 	const [isPhotoChangerBoxOpen, setIsPhotoChangerBoxOpen] = useState(false);
 
@@ -99,38 +101,62 @@ const EditProfile = () =>
 
 	const handleChange = () => isInfoValid ? null : setIsInfoValid(true);
 
-	const handleEmailChange = async (email, password) =>
+	const handleEmailChange = async e =>
 	{
-		if (email.trim() === "") throw new Error("Email can't be empty");
-		// eslint-disable-next-line no-control-regex
-		if (!email.match(/(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/))
-			throw new Error("Email is invalid");
-		if (password.trim() === "") throw new Error("Password can't be empty");
-		// TODO: Handle email change
-		return email;
+		e.preventDefault();
+		if (!isEmailValid) return;
+		setIsLoadingEmail(true);
+		const email = emailRef.current.value;
+		const password = confirmPasswordRef.current.value;
+		try {
+			if (email.trim() === "") throw new Error("Email can't be empty");
+			// eslint-disable-next-line no-control-regex
+			if (!email.match(/(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/))
+				throw new Error("Email is invalid");
+			if (password.trim() === "") throw new Error("Password can't be empty");
+			
+			const result = await fetch(`${backend}/auth/send-email-change-verification`, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${localStorage.token}`,
+					"Content-Type": "application/json"
+				},
+				body: JSON.stringify({
+					email,
+					password
+				})
+			});
+			if (result.status === 401)
+				return logOut(dispatch, history);
+			if (!result.ok) {
+				const resultJSON = await result.json();
+				throw new Error(resultJSON.detail);
+			}
+			dispatch(setSnackbar("Email verification sent.", "success"));
+		} catch(err) {
+			dispatch(setSnackbar(err.message, "error"));
+		}
+		setIsLoadingEmail(false);
 	};
 
 	const handleSubmit = async e =>
 	{
 		e.preventDefault();
 		if (!isInfoValid) return;
-		setIsLoading(true);
+		setIsLoadingInfo(true);
 		try
 		{
 			let realName = nameRef.current.value;
 			let username = usernameRef.current.value;
 			let bio = bioRef.current.value;
-			//let email = currentUser.email;
-
-			if (currentUser.username !== usernameRef.current.value)
-			{
+			
+			if (currentUser.username !== usernameRef.current.value) {
 				if (username.length > 20) throw new Error("Username too long");
 				if (username.trim() === "") throw new Error("Username not entered");
 				if (!username.match(/^[A-Za-z0-9]*$/)) throw new Error("Username not English");
 			}
 			if (currentUser.bio !== bioRef.current.value)
 				if (bio.length > 150) throw new Error("Bio too long");
-			// if (email !== emailRef.current.value) email = await handleEmailChange(emailRef.current.value, confirmPasswordRef.current.value);
 
 			const result = await fetch(`${backend}/user/edit`, {
 				method: "POST",
@@ -158,7 +184,7 @@ const EditProfile = () =>
 			setIsInfoValid(false);
 			dispatch(setSnackbar(err.message ?? "Oops, please try again later.", "error"));
 		}
-		setIsLoading(false);
+		setIsLoadingInfo(false);
 	};
 
 	const updateUserLocally = async () => await refreshOrLogout(dispatch, history);
@@ -207,6 +233,16 @@ const EditProfile = () =>
 						<textarea id="bio" defaultValue={currentUser.bio} ref={bioRef} className="outlined" onChange={handleChange}></textarea>
 					</div>
 				</div>
+				<div className="element">
+					<div className="left"></div>
+					{
+						isLoadingInfo
+							? <button className="loading"><div><img src={Loading} alt="loading"></img></div></button>
+							: <button className={`submit ${isInfoValid ? null : "disabled"}`}>Submit</button>
+					}
+				</div>
+			</form>
+			<form onSubmit={handleEmailChange}>
 				<div className="element info">
 					<span className="left"></span>
 					<div className="right">
@@ -217,7 +253,7 @@ const EditProfile = () =>
 				<div className="element">
 					<label htmlFor="email" className="left">Email</label>
 					<div className="right">
-						<input type="text" id="email" defaultValue={currentUser.email} placeholder="Email" ref={emailRef} className="outlined" onChange={handleChange}></input>
+						<input type="text" id="email" defaultValue={currentUser.email} placeholder="Email" ref={emailRef} className="outlined" onChange={() => isEmailValid ? null : setIsEmailValid(true)}></input>
 						{ !emailRef.current || currentUser.email === emailRef.current.value
 							? null 
 							: <input type="password" id="password" placeholder="Confirm Password" ref={confirmPasswordRef} className="outlined"></input>
@@ -227,9 +263,9 @@ const EditProfile = () =>
 				<div className="element">
 					<div className="left"></div>
 					{
-						isLoading
+						isLoadingEmail
 							? <button className="loading"><div><img src={Loading} alt="loading"></img></div></button>
-							: <button className={`submit ${isInfoValid ? null : "disabled"}`}>Submit</button>
+							: <button className={`submit ${isEmailValid ? null : "disabled"}`}>Submit</button>
 					}
 				</div>
 			</form>
