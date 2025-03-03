@@ -76,29 +76,26 @@ namespace InstagramClone.Services
 		public async Task<IdentityResult> SendAccountVerificationEmail(User? user = null, string? encodedEmail = null)
 		{
 			if (user is null & string.IsNullOrEmpty(encodedEmail))
-				return IdentityResult.Failed(new IdentityError() { Code = "InvalidEmail" });
+				return IdentityResult.Failed(new IdentityError() { Code = "InvalidEmail", Description = "Email is invalid." });
 
 			if (user is null && encodedEmail is not null)
 				user = await _userManager.FindByEmailAsync(WebUtility.UrlDecode(encodedEmail));
 			if (user is null)
-				return IdentityResult.Failed(new IdentityError() { Code = "UserNotFound" });
+				return IdentityResult.Failed(new IdentityError() { Code = "UserNotFound", Description = "A user with an associated email was not found." });
 
 			var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-			var encodedToken = WebUtility.UrlEncode(token);
 
-			await _emailSender.SendAccountVerificationEmail(user, encodedToken);
+			await _emailSender.SendAccountVerificationEmail(user.Email!, token);
 			return IdentityResult.Success;
 		}
 
-		public async Task<IdentityResult> ConfirmEmail(string encodedEmail, string encodedToken)
+		public async Task<IdentityResult> ConfirmEmail(string email, string token)
 		{
-			string email = WebUtility.UrlDecode(encodedEmail);
-
 			User? user = await _userManager.FindByEmailAsync(email);
 			if (user is null)
 				return IdentityResult.Failed(new IdentityError() { Code = "UserNotFound" });
 
-			var result = await _userManager.ConfirmEmailAsync(user, encodedToken);
+			var result = await _userManager.ConfirmEmailAsync(user, token);
 			if (result.Succeeded)
 			{
 				string? connectionID = _connections.GetConnection(email);

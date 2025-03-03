@@ -4,6 +4,6 @@ namespace InstagramClone.Interfaces
 {
 	public interface IEmailSender
 	{
-		public Task SendAccountVerificationEmail(User user, string encodedToken);
+		public Task SendAccountVerificationEmail(string email, string token);
 	}
 }
