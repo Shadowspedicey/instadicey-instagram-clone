@@ -75,8 +75,8 @@ const App = () =>
 	}, [isLoggedIn]);
 
 	return (
-		<div className="App" style={isLoggedIn && navbarVisibility ? { paddingTop: "75px" } : null}>
-			{ isLoggedIn && navbarVisibility ? <Navbar/> : null }
+		<div className="App" style={navbarVisibility ? { paddingTop: "75px" } : null}>
+			{ navbarVisibility ? <Navbar/> : null }
 			{
 				isLoading
 					? <Route path="/" component={LoadingPage}></Route>
