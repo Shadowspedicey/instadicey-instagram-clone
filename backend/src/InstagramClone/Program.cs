@@ -53,6 +53,10 @@ builder.Services.AddAuthorization(options =>
 	{
 		policyBuilder.AddRequirements(new IsCommentOrPostOwnerRequirement());
 	});
+	options.AddPolicy("CanAccessRoomMessages", policyBuilder =>
+	{
+		policyBuilder.AddRequirements(new IsInChatRoomRequirement());
+	});
 });
 builder.Services.AddIdentityCore<User>(options =>
 {
@@ -101,6 +105,7 @@ builder.Services.AddSingleton<UserConnectionManager>();
 builder.Services.AddSingleton<IAuthorizationHandler, IsPostOwnerHandler>();
 builder.Services.AddSingleton<IAuthorizationHandler, IsCommentsPostOwnerHandler>();
 builder.Services.AddSingleton<IAuthorizationHandler, IsCommentOwnerHandler>();
+builder.Services.AddSingleton<IAuthorizationHandler, IsInChatRoomHandler>();
 
 var app = builder.Build();
 
