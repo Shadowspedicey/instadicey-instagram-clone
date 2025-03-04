@@ -10,6 +10,7 @@ namespace InstagramClone.Data
 		public DbSet<Comment> Comments { get; set; }
 		public DbSet<UserSearch> UserSearches { get; set; }
 		public DbSet<RefreshToken> RefreshTokens { get; set; }
+		public DbSet<ChatRoom> ChatRooms { get; set; }
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
@@ -107,6 +108,18 @@ namespace InstagramClone.Data
 					.WithMany(p => p.Comments)
 					.OnDelete(DeleteBehavior.ClientCascade);
 			});
+
+			modelBuilder.Entity<ChatRoom>(CR =>
+			{
+				CR.HasMany(cr => cr.Messages).WithOne();
+				CR.HasMany(cr => cr.Users).WithMany().UsingEntity(j =>
+				{
+					j.ToTable("ChatRoomUsers");
+					j.Property("UsersId").HasColumnName("UserID");
+				});
+			});
+
+			modelBuilder.Entity<Message>(m => m.ToTable("Messages"));
 		}
 	}
 }
