@@ -25,6 +25,15 @@ namespace InstagramClone.Controllers
 			return result.IsSuccess ? Ok(result.Value.ToDTO(DownloadFileEndpoint)) : this.AppropriateResponseBasedOnResult(result);
 		}
 
+		[AllowAnonymous]
+		[HttpGet("search")]
+		public async Task<IActionResult> Search(string username)
+		{
+			var result = await _userService.SearchForUsers(username);
+
+			return result.IsSuccess ? Ok(result.Value.Select(u => u.ToMinimalDTO(DownloadFileEndpoint))) : this.AppropriateResponseBasedOnResult(result);
+		}
+
 		[EditDTOUsernameLowercaseFilter]
 		[HttpPost("edit")]
 		public async Task<IActionResult> Edit(UserEditDTO userData)

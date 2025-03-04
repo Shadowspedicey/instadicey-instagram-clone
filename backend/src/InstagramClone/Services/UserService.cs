@@ -30,7 +30,9 @@ namespace InstagramClone.Services
 
 		public async Task<Result<ICollection<User>>> SearchForUsers(string searchTerm)
 		{
-			throw new NotImplementedException();
+			var users = (ICollection<User>) await _dbContext.Users.AsNoTracking().Where(u => EF.Functions.Like(u.UserName, $"%{searchTerm}%")).ToListAsync();
+
+			return Result.Ok(users);
 		}
 
 		public async Task<Result> EditUserData(ClaimsPrincipal currentUserPrincipal, UserEditDTO userDataDTO)
