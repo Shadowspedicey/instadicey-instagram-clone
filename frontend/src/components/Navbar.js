@@ -88,57 +88,89 @@ const Navbar = () =>
 const Searchbar = () =>
 {
 	const dispatch = useDispatch();
-	const currentUser = useSelector(state => state.currentUser);
+	const history = useHistory();
 	const [isLoading, setIsLoading] = useState(false);
-	const [usersCache, setUsersCache] = useState(null);
+	const [usersCache, setUsersCache] = useState([]);
 	// An array of users
 	const [searchResults, setSearchResults] = useState([]);
 	const [open, setOpen] = useState(false);
 	const [inputValue, setInputValue] = useState("");
 
-	const addToRecentSearches = async uid =>
+	const addToRecentSearches = async user =>
 	{
-		// TODO: Update user recent searches (id, timestamp)
+		if (!localStorage.token)
+			return setUsersCache([user, ...usersCache]);
+
+		const result = await fetch(`${backend}/user/add-search/${user.username}`, {
+			method: "POST",
+			headers: {
+				Authorization: `Bearer ${localStorage.token}`
+			}
+		});
+		if (result.status === 401)
+			return logOut(dispatch, history);
 	};
 
 	const showRecentSearches = async () =>
 	{
+		if (!localStorage.token)
+			return setSearchResults(usersCache);
 		try
 		{
 			setIsLoading(true);
-			// TODO: Retrieve recent searches and set it as the search results
+			const result = await fetch(`${backend}/user/get-search`, {
+				headers: {
+					Authorization: `Bearer ${localStorage.token}`
+				}
+			});
+			if (result.status === 401)
+				return logOut(dispatch, history);
+			if (result.ok)
+				setSearchResults(await result.json());
 			setIsLoading(false);
-		} catch (err)
-		{
-			console.error(err);
+		} catch {
 			dispatch(setSnackbar("Oops, try again later.", "error"));
 		}
 	};
 	
-	const removeFromRecentSearches = async (e, uid) =>
+	const removeFromRecentSearches = async (e, username) =>
 	{
 		e.stopPropagation();
 		e.preventDefault();
 		
-		try
-		{
-			setSearchResults(searchResults.filter(option => option.uid !== uid));
-			// TODO: Remove that result from the user's recent searches in the DB
-		} catch (err)
-		{
-			console.error(err);
+		if (!localStorage.token) {
+			const newCache = usersCache.filter(u => u.username !== username);
+			setSearchResults(newCache);
+			return setUsersCache(newCache);
 		}
+		
+		const result = await fetch(`${backend}/user/remove-search/${username}`, {
+			method: "POST",
+			headers: {
+				Authorization: `Bearer ${localStorage.token}`
+			}
+		});
+		if (result.status === 401)
+			return logOut(dispatch, history);
+
+		await showRecentSearches();
 	};
 	
-	const clearRecentSearches = () =>
+	const clearRecentSearches = async () =>
 	{
-		try
-		{
+		try {
+			const result = await fetch(`${backend}/user/clear-search`, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${localStorage.token}`
+				}
+			});
+			if (result.status === 401)
+				return logOut(dispatch, history);
+			if (!result.ok)
+				throw new Error();
 			setSearchResults([]);
-			// TODO: Clear the user's recent searches from the DB
-		} catch (err)
-		{
-			console.error(err);
+		} catch {
 			dispatch(setSnackbar("Oops, try again later.", "error"));
 		}
 	};
@@ -150,7 +182,13 @@ const Searchbar = () =>
 		if (newInput === "") return showRecentSearches();
 		
 		setIsLoading(true);
-		// TODO: Get the user's with matching names and set them as the search results
+		try {
+			const result = await fetch(`${backend}/user/search?username=${newInput}`);
+			if (result.ok)
+				setSearchResults(await result.json());
+		} catch {
+			dispatch(setSnackbar("Oops, try again later.", "error"));
+		}
 		setIsLoading(false);
 	};
 
@@ -162,11 +200,11 @@ const Searchbar = () =>
 	};
 	const handleOnClose = () => setOpen(false);
 
-	const handleElementClick = uid =>
+	const handleElementClick = user =>
 	{
 		setOpen(false);
 		setInputValue("");
-		addToRecentSearches(uid);
+		addToRecentSearches(user);
 	};
 
 	return (
@@ -185,7 +223,7 @@ const Searchbar = () =>
 						<div>
 							<span className="arrow"></span>
 							<ul className="search-list outlined">
-								{inputValue === "" && !isLoading ? <div className="recent">Recent<button className="text" onClick={clearRecentSearches}>Clear All</button></div> : null}
+								{inputValue === "" && !isLoading ? <div className="recent">Recent{ localStorage.token && <button className="text" onClick={clearRecentSearches}>Clear All</button> }</div> : null}
 								{
 									isLoading
 										? <div className="loading"><img src={Loading} alt="loading..."></img></div>
@@ -193,13 +231,13 @@ const Searchbar = () =>
 										searchResults.map(option =>
 											(
 												<li key={option.username}>
-													<Link to={`/${option.username}`} onClick={() => handleElementClick(option.uid)}>
+													<Link to={`/${option.username}`} onClick={() => handleElementClick(option)}>
 														<div className="img-container outlined round"><img src={option.profilePic} alt={`${option.username}'s Profile Pic'`}></img></div>
 														<div className="info">
-															<div style={{display: "flex"}}><span className="username">{option.username}</span> {option.verified ? <div className="verified" title="Verified"></div> : null}</div>
+															<div style={{display: "flex"}}><span className="username">{option.username}</span> {option.isVerified ? <div className="verified" title="Verified"></div> : null}</div>
 															<span className="real-name">{option.realName}</span>
 														</div>
-														<div className="remove" onClick={e => removeFromRecentSearches(e, option.uid)}><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" className="bi bi-x-lg" viewBox="0 0 16 16"><path d="M1.293 1.293a1 1 0 0 1 1.414 0L8 6.586l5.293-5.293a1 1 0 1 1 1.414 1.414L9.414 8l5.293 5.293a1 1 0 0 1-1.414 1.414L8 9.414l-5.293 5.293a1 1 0 0 1-1.414-1.414L6.586 8 1.293 2.707a1 1 0 0 1 0-1.414z"/></svg></div>
+														{ inputValue === "" && <div className="remove" onClick={e => removeFromRecentSearches(e, option.username)}><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" className="bi bi-x-lg" viewBox="0 0 16 16"><path d="M1.293 1.293a1 1 0 0 1 1.414 0L8 6.586l5.293-5.293a1 1 0 1 1 1.414 1.414L9.414 8l5.293 5.293a1 1 0 0 1-1.414 1.414L8 9.414l-5.293 5.293a1 1 0 0 1-1.414-1.414L6.586 8 1.293 2.707a1 1 0 0 1 0-1.414z"/></svg></div> }
 													</Link>
 												</li>
 											))
