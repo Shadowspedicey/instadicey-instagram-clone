@@ -5,6 +5,7 @@ using InstagramClone.Hubs;
 using InstagramClone.Interfaces;
 using InstagramClone.Services;
 using InstagramClone.Utils;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -42,6 +43,17 @@ builder.Services.AddAuthentication("Bearer")
 	{
 		options.MapInboundClaims = false;
 		options.TokenValidationParameters = jwtValidationParameters;
+		options.Events = new JwtBearerEvents
+		{
+			OnMessageReceived = context =>
+			{
+				var accessToken = context.Request.Query["access_token"];
+				var path = context.HttpContext.Request.Path;
+				if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/chat-hub"))
+					context.Token = accessToken;
+				return Task.CompletedTask;
+			}
+		};
 	});
 builder.Services.AddAuthorization(options =>
 {
@@ -100,6 +112,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<ILikeService, LikeService>();
 builder.Services.AddSingleton<UserConnectionManager>();
+builder.Services.AddScoped<IChatService, ChatService>();
 
 // Authorization handlers
 builder.Services.AddSingleton<IAuthorizationHandler, IsPostOwnerHandler>();
@@ -121,6 +134,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapHub<AuthHub>("/email-verification-hub").RequireCors("Hub");
+app.MapHub<ChatHub>("/chat-hub").RequireCors("Hub").RequireAuthorization();
 
 
 app.Run();

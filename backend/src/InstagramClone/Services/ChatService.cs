@@ -6,13 +6,16 @@ using Microsoft.AspNetCore.Authorization;
 using InstagramClone.Utils;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using Microsoft.AspNetCore.SignalR;
+using InstagramClone.Hubs;
 
 namespace InstagramClone.Services
 {
-	public class ChatService(AppDbContext dbContext, IAuthorizationService authorizationService) : IChatService
+	public class ChatService(AppDbContext dbContext, IAuthorizationService authorizationService, IHubContext<ChatHub> chatHub) : IChatService
 	{
 		private readonly AppDbContext _dbContext = dbContext;
 		private readonly IAuthorizationService _authorizationService = authorizationService;
+		private readonly IHubContext<ChatHub> _chatHub = chatHub;
 
 		public async Task<Result<ChatRoom>> CreateChatRoom(ClaimsPrincipal currentUserPrinciple, string[] usernames)
 		{
@@ -83,6 +86,7 @@ namespace InstagramClone.Services
 			Message msg = new() { Content = message, User = currentUser };
 			chatRoom.Messages.Add(msg);
 			await _dbContext.SaveChangesAsync();
+			await _chatHub.Clients.Group(roomID).SendAsync("ReceiveMessage", msg.Content);
 			return Result.Ok(msg);
 		}
 	}

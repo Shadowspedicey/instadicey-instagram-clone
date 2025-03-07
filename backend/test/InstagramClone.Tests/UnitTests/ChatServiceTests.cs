@@ -1,8 +1,10 @@
 ﻿using InstagramClone.Data;
 using InstagramClone.Data.Entities;
+using InstagramClone.Hubs;
 using InstagramClone.Services;
 using InstagramClone.Utils;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Moq;
@@ -41,7 +43,8 @@ namespace InstagramClone.Tests.UnitTests
 			dbContext.Users.Add(user);
 			dbContext.SaveChanges();
 
-			ChatService chatService = new(dbContext, null!);
+			var chatHub = Mock.Of<IHubContext<ChatHub>>();
+			ChatService chatService = new(dbContext, null!, chatHub);
 
 			_dbContext = dbContext;
 			_user = user;
@@ -208,7 +211,8 @@ namespace InstagramClone.Tests.UnitTests
 			await _dbContext.SaveChangesAsync();
 			var authorizationServiceMock = new Mock<IAuthorizationService>();
 			authorizationServiceMock.Setup(s => s.AuthorizeAsync(_claimsPrincipal, chatRoom, "CanAccessRoomMessages").Result).Returns(AuthorizationResult.Success());
-			ChatService chatService = new(_dbContext, authorizationServiceMock.Object);
+			var chatHub = Mock.Of<IHubContext<ChatHub>>();
+			ChatService chatService = new(_dbContext, authorizationServiceMock.Object, chatHub);
 
 			var result = await chatService.GetMessages(_claimsPrincipal, chatRoom.ID);
 
@@ -229,7 +233,8 @@ namespace InstagramClone.Tests.UnitTests
 			await _dbContext.SaveChangesAsync();
 			var authorizationServiceMock = new Mock<IAuthorizationService>();
 			authorizationServiceMock.Setup(s => s.AuthorizeAsync(_claimsPrincipal, chatRoom, "CanAccessRoomMessages").Result).Returns(AuthorizationResult.Success());
-			ChatService chatService = new(_dbContext, authorizationServiceMock.Object);
+			var chatHub = Mock.Of<IHubContext<ChatHub>>();
+			ChatService chatService = new(_dbContext, authorizationServiceMock.Object, chatHub);
 
 			var result = await chatService.GetMessages(_claimsPrincipal, chatRoom.ID);
 
@@ -259,7 +264,8 @@ namespace InstagramClone.Tests.UnitTests
 			await _dbContext.SaveChangesAsync();
 			var authorizationServiceMock = new Mock<IAuthorizationService>();
 			authorizationServiceMock.Setup(s => s.AuthorizeAsync(_claimsPrincipal, chatRoom, "CanAccessRoomMessages").Result).Returns(AuthorizationResult.Failed());
-			ChatService chatService = new(_dbContext, authorizationServiceMock.Object);
+			var chatHub = Mock.Of<IHubContext<ChatHub>>();
+			ChatService chatService = new(_dbContext, authorizationServiceMock.Object, chatHub);
 
 			var result = await chatService.GetMessages(_claimsPrincipal, chatRoom.ID);
 
@@ -275,8 +281,13 @@ namespace InstagramClone.Tests.UnitTests
 			await _dbContext.AddAsync(chatRoom);
 			await _dbContext.SaveChangesAsync();
 			var authorizationServiceMock = new Mock<IAuthorizationService>();
-			authorizationServiceMock.Setup(s => s.AuthorizeAsync(_claimsPrincipal, chatRoom, "CanAccessRoomMessages").Result).Returns(AuthorizationResult.Success());
-			ChatService chatService = new(_dbContext, authorizationServiceMock.Object);
+			authorizationServiceMock.Setup(s => s.AuthorizeAsync(_claimsPrincipal, It.IsAny<ChatRoom>(), "CanAccessRoomMessages").Result).Returns(AuthorizationResult.Success());
+			var mockHubContext = new Mock<IHubContext<ChatHub>>();
+			var mockHubClients = new Mock<IHubClients>();
+			var mockClientProxy = new Mock<IClientProxy>();
+			mockHubContext.Setup(ctx => ctx.Clients).Returns(mockHubClients.Object);
+			mockHubClients.Setup(clients => clients.Group(It.IsAny<string>())).Returns(mockClientProxy.Object);
+			ChatService chatService = new(_dbContext, authorizationServiceMock.Object, mockHubContext.Object);
 
 			string message = "msg";
 			var result = await chatService.SendMessage(_claimsPrincipal, chatRoom.ID, message);
@@ -306,7 +317,8 @@ namespace InstagramClone.Tests.UnitTests
 			await _dbContext.SaveChangesAsync();
 			var authorizationServiceMock = new Mock<IAuthorizationService>();
 			authorizationServiceMock.Setup(s => s.AuthorizeAsync(_claimsPrincipal, chatRoom, "CanAccessRoomMessages").Result).Returns(AuthorizationResult.Failed());
-			ChatService chatService = new(_dbContext, authorizationServiceMock.Object);
+			var chatHub = Mock.Of<IHubContext<ChatHub>>();
+			ChatService chatService = new(_dbContext, authorizationServiceMock.Object, chatHub);
 
 			var result = await chatService.SendMessage(_claimsPrincipal, chatRoom.ID, "message");
 			await _dbContext.Entry(chatRoom).ReloadAsync();
