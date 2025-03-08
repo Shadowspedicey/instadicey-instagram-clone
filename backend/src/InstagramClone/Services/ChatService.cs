@@ -17,10 +17,18 @@ namespace InstagramClone.Services
 		private readonly IAuthorizationService _authorizationService = authorizationService;
 		private readonly IHubContext<ChatHub> _chatHub = chatHub;
 
-		public async Task<Result<ChatRoom>> CreateChatRoom(ClaimsPrincipal currentUserPrinciple, string[] usernames)
+		public async Task<Result<ChatRoom>> GetOrCreateChatRoom(ClaimsPrincipal currentUserPrinciple, string[] usernames)
 		{
 			User currentUser = await _dbContext.Users.FirstAsync(u => u.Id == currentUserPrinciple.FindFirstValue("sub"));
-			IList<User> users = await _dbContext.Users.Where(u => usernames.Contains(u.UserName)).ToListAsync();
+			if (usernames.Length == 1)
+			{
+				var searchResult = await GetRoom(currentUserPrinciple, username: usernames[0]);
+				if (searchResult.IsSuccess) return Result.Ok(searchResult.Value);
+				// If error code is anything except NotFound, return the result
+				else if (searchResult.Errors.FirstOrDefault()?.Metadata["code"].ToString() != Enum.GetName(ErrorCode.NotFound))
+					return searchResult;
+			}
+			List<User> users = await _dbContext.Users.Where(u => usernames.Contains(u.UserName)).ToListAsync();
 			if (users.Count != usernames.Length)
 				return Result.Fail(new CodedError(ErrorCode.InvalidInput, $"The user/s: {string.Join(", ", usernames.Where(username => users.Any(u => u.UserName != username)))} were not found."));
 

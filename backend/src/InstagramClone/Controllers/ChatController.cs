@@ -44,7 +44,7 @@ namespace InstagramClone.Controllers
 		[HttpPost("room")]
 		public async Task<IActionResult> CreateRoom([FromBody] string[] usernames)
 		{
-			var result = await _chatService.CreateChatRoom(User, usernames);
+			var result = await _chatService.GetOrCreateChatRoom(User, usernames);
 
 			return result.IsSuccess ? Ok(result.Value.ToViewDTO(DownloadFileEndpoint)) : this.AppropriateResponseBasedOnResult(result);
 		}
