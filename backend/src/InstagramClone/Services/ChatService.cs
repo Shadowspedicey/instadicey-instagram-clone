@@ -57,6 +57,7 @@ namespace InstagramClone.Services
 			User currentUser = await _dbContext.Users.FirstAsync(u => u.Id == currentUserPrinciple.FindFirstValue("sub"));
 			var chatRooms = (await _dbContext.ChatRooms
 				.Where(cr => cr.Users.Contains(currentUser))
+				.Where(cr => cr.Messages.Count != 0)
 				.ToListAsync())
 				.OrderByDescending(cr => cr.LastUpdated)
 				.ToList();
