@@ -16,7 +16,7 @@ namespace InstagramClone.Controllers
 		private string DownloadFileEndpoint => $"{Request.Scheme}://{Request.Host}/file/";
 
 		[HttpGet("room")]
-		public async Task<IActionResult> GetRoomByID(string? roomID, string? username)
+		public async Task<IActionResult> GetRoom(string? roomID, string? username)
 		{
 			if (roomID is null && username is null)
 				return this.ProblemWithErrors(statusCode: 400, detail: "A room was requested without providing a roomID or a username", errors: null!);

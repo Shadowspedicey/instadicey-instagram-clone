@@ -79,13 +79,13 @@ namespace InstagramClone.Tests.UnitTests
 		}
 
 		[Fact]
-		public async Task CreateChatRoom_ShouldReturnSuccess_IfProvidedOneValidPerson()
+		public async Task GetOrCreateChatRoom_ShouldReturnSuccess_IfProvidedOneValidPerson()
 		{
 			User anotherUser = GetAnotherUser();
 			await _dbContext.AddAsync(anotherUser);
 			await _dbContext.SaveChangesAsync();
 
-			var result = await _chatService.CreateChatRoom(_claimsPrincipal, [anotherUser.UserName!]);
+			var result = await _chatService.GetOrCreateChatRoom(_claimsPrincipal, [anotherUser.UserName!]);
 
 			Assert.True(result.IsSuccess);
 			Assert.Single(_dbContext.ChatRooms);
@@ -95,9 +95,9 @@ namespace InstagramClone.Tests.UnitTests
 		}
 
 		[Fact]
-		public async Task CreateChatRoom_ShouldReturnFailedResultInvalidInput_IfProvidedOnePersonThatDoesntExist()
+		public async Task GetOrCreateChatRoom_ShouldReturnFailedResultInvalidInput_IfProvidedOnePersonThatDoesntExist()
 		{
-			var result = await _chatService.CreateChatRoom(_claimsPrincipal, ["anotheruser"]);
+			var result = await _chatService.GetOrCreateChatRoom(_claimsPrincipal, ["anotheruser"]);
 
 			Assert.False(result.IsSuccess);
 			Assert.Equal(Enum.GetName(ErrorCode.InvalidInput), result.Errors.First().Metadata["code"]);
@@ -105,14 +105,14 @@ namespace InstagramClone.Tests.UnitTests
 		}
 
 		[Fact]
-		public async Task CreateChatRoom_ShouldReturnSuccess_IfProvidedMultipleValidPeople()
+		public async Task GetOrCreateChatRoom_ShouldReturnSuccess_IfProvidedMultipleValidPeople()
 		{
 			User anotherUser = GetAnotherUser();
 			User anotherUser2 = GetAnotherUser("2");
 			await _dbContext.AddRangeAsync(anotherUser, anotherUser2);
 			await _dbContext.SaveChangesAsync();
 
-			var result = await _chatService.CreateChatRoom(_claimsPrincipal, [anotherUser.UserName!, anotherUser2.UserName!]);
+			var result = await _chatService.GetOrCreateChatRoom(_claimsPrincipal, [anotherUser.UserName!, anotherUser2.UserName!]);
 
 			Assert.True(result.IsSuccess);
 			Assert.Single(_dbContext.ChatRooms);
@@ -123,13 +123,13 @@ namespace InstagramClone.Tests.UnitTests
 		}
 
 		[Fact]
-		public async Task CreateChatRoom_ShouldReturnFailedResultNotFound_IfProvidedMultiplePeopleWithAtLeastOneNotExisting()
+		public async Task GetOrCreateChatRoom_ShouldReturnFailedResultNotFound_IfProvidedMultiplePeopleWithAtLeastOneNotExisting()
 		{
 			User anotherUser = GetAnotherUser();
 			await _dbContext.AddAsync(anotherUser);
 			await _dbContext.SaveChangesAsync();
 
-			var result = await _chatService.CreateChatRoom(_claimsPrincipal, [anotherUser.UserName!, "anotheruser2"]);
+			var result = await _chatService.GetOrCreateChatRoom(_claimsPrincipal, [anotherUser.UserName!, "anotheruser2"]);
 
 			Assert.False(result.IsSuccess);
 			Assert.Equal(Enum.GetName(ErrorCode.InvalidInput), result.Errors.First().Metadata["code"]);
@@ -144,7 +144,7 @@ namespace InstagramClone.Tests.UnitTests
 			await _dbContext.AddAsync(chatRoom);
 			await _dbContext.SaveChangesAsync();
 
-			var result = await _chatService.GetRoomWithUser(_claimsPrincipal, anotherUser.UserName!);
+			var result = await _chatService.GetRoom(_claimsPrincipal, anotherUser.UserName!);
 
 			Assert.True(result.IsSuccess);
 			Assert.Equal(chatRoom.ID, result.Value.ID);
@@ -153,7 +153,7 @@ namespace InstagramClone.Tests.UnitTests
 		[Fact]
 		public async Task GetRoomWithUser_ShouldReturnFailedInvalidInput_IfUserDoesntExist()
 		{
-			var result = await _chatService.GetRoomWithUser(_claimsPrincipal, "anotheruser2");
+			var result = await _chatService.GetRoom(_claimsPrincipal, "anotheruser2");
 
 			Assert.False(result.IsSuccess);
 			Assert.Equal(Enum.GetName(ErrorCode.InvalidInput), result.Errors.First().Metadata["code"]);
@@ -166,7 +166,7 @@ namespace InstagramClone.Tests.UnitTests
 			await _dbContext.AddAsync(anotherUser);
 			await _dbContext.SaveChangesAsync();
 
-			var result = await _chatService.GetRoomWithUser(_claimsPrincipal, anotherUser.UserName!);
+			var result = await _chatService.GetRoom(_claimsPrincipal, anotherUser.UserName!);
 
 			Assert.False(result.IsSuccess);
 			Assert.Equal(Enum.GetName(ErrorCode.NotFound), result.Errors.First().Metadata["code"]);
@@ -240,7 +240,7 @@ namespace InstagramClone.Tests.UnitTests
 
 			Assert.True(result.IsSuccess);
 			Assert.Equal(2, result.Value.Count);
-			Assert.Equal(message2.ID, result.Value.First().ID);
+			Assert.Equal(message2.ID, result.Value.Last().ID);
 		}
 
 		[Fact]
@@ -287,6 +287,8 @@ namespace InstagramClone.Tests.UnitTests
 			var mockClientProxy = new Mock<IClientProxy>();
 			mockHubContext.Setup(ctx => ctx.Clients).Returns(mockHubClients.Object);
 			mockHubClients.Setup(clients => clients.Group(It.IsAny<string>())).Returns(mockClientProxy.Object);
+			mockHubClients.Setup(clients => clients.User(It.IsAny<string>())).Returns(mockClientProxy.Object);
+			mockHubClients.Setup(clients => clients.Users(It.IsAny<ICollection<string>>())).Returns(mockClientProxy.Object);
 			ChatService chatService = new(_dbContext, authorizationServiceMock.Object, mockHubContext.Object);
 
 			string message = "msg";
