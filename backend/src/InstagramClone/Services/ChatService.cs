@@ -68,7 +68,7 @@ namespace InstagramClone.Services
 			if (!authorizationResult.Succeeded)
 				return Result.Fail(new CodedError(ErrorCode.InsufficientPermissions, "User isn't part of chat room."));
 
-			ICollection<Message> messages = chatRoom.Messages.OrderByDescending(m => m.CreatedAt).ToList();
+			ICollection<Message> messages = chatRoom.SortedMessages.ToList();
 			return Result.Ok(messages);
 		}
 

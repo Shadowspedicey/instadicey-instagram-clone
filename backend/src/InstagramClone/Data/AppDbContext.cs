@@ -117,6 +117,7 @@ namespace InstagramClone.Data
 					j.ToTable("ChatRoomUsers");
 					j.Property("UsersId").HasColumnName("UserID");
 				});
+				CR.Ignore(cr => cr.SortedMessages);
 			});
 
 			modelBuilder.Entity<Message>(m => m.ToTable("Messages"));
