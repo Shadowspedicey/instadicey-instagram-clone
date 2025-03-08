@@ -1,4 +1,4 @@
-const isLoading = (state = true, action) =>
+const isLoading = (state = false, action) =>
 {
 	switch (action.type)
 	{
