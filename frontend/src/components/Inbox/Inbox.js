@@ -2,23 +2,32 @@ import { useEffect, useState } from "react";
 import { Route, useParams } from "react-router";
 import { NavLink, Switch } from "react-router-dom";
 import { useMediaQuery } from "react-responsive";
-import { useSelector } from "react-redux";
-import { formatDistanceToNowStrict, fromUnixTime } from "date-fns";
+import { useDispatch, useSelector } from "react-redux";
+import { formatDistanceToNowStrict } from "date-fns";
+import * as signalR from "@microsoft/signalr";
 import Room from "./Room";
 import FollowWindow from "../FollowWindow";
-import LoadingPage from "../LoadingPage";
 import SendMessage from "../../assets/misc/send-message.png";
 import "./inbox.css";
+import { backend } from "../../config";
+import { logOut } from "../../helpers";
+import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { setSnackbar } from "../../state/actions/snackbar";
+import { startLoading, stopLoading } from "../../state/actions/isLoading";
 
 const Inbox = () =>
 {
 	const { roomID } = useParams();
 	const currentUser = useSelector(state => state.currentUser);
+	const dispatch = useDispatch();
+	const history = useHistory();
 	const [currentUserFollows, setCurrentUserFollows] = useState(null);
 	const [recentChats, setRecentChats] = useState(null);
 	const [isNewMessageBoxOpen, setIsNewMessageBoxOpen] = useState(false);
 	const closeNewMessageBox = () => setIsNewMessageBoxOpen(false);
 	const phoneQuery = useMediaQuery({query: "(max-width: 600px)"});
+
+	useEffect(() => document.title = "Inbox • Chats");
 
 	const formatDate = date =>
 	{
@@ -31,25 +40,20 @@ const Inbox = () =>
 	const getChats = async () =>
 	{
 		if (!currentUser) return;
-		try
-		{
-			// TODO: Get the recent chats of the current user (each chat should contain the other party's info)
-			// const q = query(collection(db, "chats"), where("members", "array-contains", currentUser.user.uid));
-			// let chats = await getDocs(q)
-			// 	.then(querySnapshot => querySnapshot.docs.map(doc => doc.data()))
-			// 	.then(chats => chats.filter(chat => chat.lastMessage ? chat : false))
-			// 	.then(chats => chats.sort((a,b) => a.lastUpdated < b.lastUpdated ? 1 : -1))
-			// 	.then(chats => Promise.all(chats.map(async chat =>
-			// 	{
-			// 		const otherUser = await getDoc(doc(db, "users", chat.members.filter(user => user !== currentUser.user.uid)[0])).then(doc => doc.data());
-			// 		return {
-			// 			...chat,
-			// 			otherUser,
-			// 		};
-			// 	})));
-			// setRecentChats(chats);
-		} catch (err)
-		{
+		try {
+			const result = await fetch(`${backend}/chat/rooms`, {
+				headers: {
+					Authorization: `Bearer ${localStorage.token}`
+				}
+			});
+			if (result.status === 401)
+				return logOut(dispatch, history);
+			const resultJSON = await result.json();
+			if (!result.ok)
+				throw new Error(resultJSON.detail);
+
+			setRecentChats(resultJSON);
+		} catch(err) {
 			console.error(err);
 		}
 	};
@@ -57,66 +61,78 @@ const Inbox = () =>
 	const getUsersFollows = async () =>
 	{
 		if (!currentUser) return;
-		try
-		{
-			// TODO: Get user following and followers and set it
-			// Keep in mind: currentUserFollows is an object that has .following and .followers both as an array
-		} catch (err)
-		{
-			console.error(err);
+		try {
+			const result = await fetch(`${backend}/user/${currentUser.username}`);
+			const resultJSON = await result.json();
+			if (!result.ok)
+				throw new Error(resultJSON.detail, { cause: resultJSON.errors });
+			setCurrentUserFollows({following: resultJSON.following, followers: resultJSON.followers});
+		} catch (err) {
+			dispatch(setSnackbar(err.message));
 		}
 	};
 	
-	useEffect(() => document.title = "Inbox • Chats");
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	useEffect(() => getUsersFollows(), [currentUser]);
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	useEffect(() => getChats(), [currentUser]);
-
-	useEffect(() =>
-	{
+	useEffect(() => {
 		if (!currentUser) return;
-		// const q = query(collection(db, "chats"), where("members", "array-contains", currentUser.user.uid));
-		// const unsubscribe = onSnapshot(q, async querySnapshot =>
-		// {
-		// 	const chats = querySnapshot.docs.map(doc => doc.data()).filter(chat => chat.lastMessage ? chat : false).sort((a, b) => a.lastUpdated < b.lastUpdated ? 1 : -1);
-		// 	const recentChats = await Promise.all(chats.map(async chat =>
-		// 	{
-		// 		const otherUser = await getDoc(doc(db, "users", chat.members.filter(user => user !== currentUser.user.uid)[0])).then(doc => doc.data());
-		// 		return {
-		// 			...chat,
-		// 			otherUser,
-		// 		};
-		// 	}));
-		// 	setRecentChats(recentChats);
-		// });
-
-		// return () => unsubscribe();
+		const getData = async () => {
+			dispatch(startLoading());
+			await getUsersFollows();
+			await getChats();
+			dispatch(stopLoading());
+		};
+		getData();
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [currentUser]);
 
-	if (!currentUser || !recentChats) return <LoadingPage/>;
+	useEffect(() => {
+		if (!currentUser) return;
+		const connection = new signalR.HubConnectionBuilder().withUrl(`${backend}/chat-hub`, { accessTokenFactory: () => localStorage.token }).withAutomaticReconnect().build();
+		connection.start().then(() => {
+			connection.on("UpdateRoom", chatRoom => {
+				var found = false;
+				chatRoom.lastUpdated = chatRoom.lastUpdated.slice(0, -1);
+				chatRoom.users = chatRoom.users.filter(u => u.username !== currentUser.username);
+				setRecentChats(prev => prev.map(c => {
+					if (c.id === chatRoom.id) {
+						found = true;
+						return chatRoom;
+					} else return c;
+				}));
+				if (!found)
+					setRecentChats(prev => [...prev, chatRoom]);
+			});
+			return () => connection.stop();
+		}).catch(err => {
+			if (err.statusCode === 401)
+				return logOut(dispatch, history);
+		});
+
+		return () => connection.stop();
+	}, [currentUser, dispatch, history]);
+
+	if (!currentUser || !recentChats) return null;
 	if (phoneQuery)
 		return(
 			<div className="inbox-window outlined">
 				{ isNewMessageBoxOpen &&
-						<FollowWindow title="New Message" uids={[...currentUserFollows.following, ...currentUserFollows.followers]} closeFollowListWindow={closeNewMessageBox} newMessage/>
+						<FollowWindow title="New Message" users={[...currentUserFollows.following, ...currentUserFollows.followers]} closeFollowListWindow={closeNewMessageBox} newMessage/>
 				}
 				<div className="container">
 					<Switch>
 						<Route exact path="/direct/inbox">
 							<div className="recent-chats left">
-								<header>{currentUser.info.username}<button className="icon" onClick={() => setIsNewMessageBoxOpen(true)}><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fillRule="evenodd" clipRule="evenodd"><path d="M8.071 21.586l-7.071 1.414 1.414-7.071 14.929-14.929 5.657 5.657-14.929 14.929zm-.493-.921l-4.243-4.243-1.06 5.303 5.303-1.06zm9.765-18.251l-13.3 13.301 4.242 4.242 13.301-13.3-4.243-4.243z"/></svg></button></header>
+								<header>{currentUser.username}<button className="icon" onClick={() => setIsNewMessageBoxOpen(true)}><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fillRule="evenodd" clipRule="evenodd"><path d="M8.071 21.586l-7.071 1.414 1.414-7.071 14.929-14.929 5.657 5.657-14.929 14.929zm-.493-.921l-4.243-4.243-1.06 5.303 5.303-1.06zm9.765-18.251l-13.3 13.301 4.242 4.242 13.301-13.3-4.243-4.243z"/></svg></button></header>
 								<ul>
 									{
-										recentChats.map(chat =>
+										recentChats.sort((a, b) => new Date(b.lastUpdated) - new Date(a.lastUpdated)).map(chat =>
 											<NavLink to={`/direct/t/${chat.id}`} activeClassName="selected" key={chat.id}>
-												<li key={chat.otherUser.uid}>
-													<span className="profile-pic"><img src={chat.otherUser.profilePic} alt={`${chat.otherUser.currentUser}'s profile pic`}></img></span>
+												<li key={chat.id}>
+													<span className="profile-pic"><img src={chat.users[0].profilePic} alt={`${chat.users[0].username}'s profile pic`}></img></span>
 													<div className="info">
-														<span className="username">{chat.otherUser.username}</span>
+														<span className="username">{chat.users[0].username}</span>
 														<div className="message">
-															<div>{chat.lastMessage.message}</div>
-															<span>• {formatDate(formatDistanceToNowStrict(fromUnixTime(chat.lastUpdated ? chat.lastUpdated.seconds : 0)))}</span>
+															<div>{chat.lastMessage?.message}</div>
+															{chat.lastUpdated && <span>• {formatDate(formatDistanceToNowStrict(new Date(chat.lastUpdated+"Z")))}</span>}
 														</div>
 													</div>
 												</li>
@@ -136,22 +152,22 @@ const Inbox = () =>
 	else return(
 		<div className="inbox-window outlined">
 			{ isNewMessageBoxOpen &&
-					<FollowWindow title="New Message" uids={[...currentUserFollows.following, ...currentUserFollows.followers]} closeFollowListWindow={closeNewMessageBox} newMessage/>
+					<FollowWindow title="New Message" users={[...currentUserFollows.following, ...currentUserFollows.followers]} closeFollowListWindow={closeNewMessageBox} newMessage/>
 			}
 			<div className="container">
 				<div className="recent-chats left">
-					<header>{currentUser.info.username}<button className="icon" onClick={() => setIsNewMessageBoxOpen(true)}><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fillRule="evenodd" clipRule="evenodd"><path d="M8.071 21.586l-7.071 1.414 1.414-7.071 14.929-14.929 5.657 5.657-14.929 14.929zm-.493-.921l-4.243-4.243-1.06 5.303 5.303-1.06zm9.765-18.251l-13.3 13.301 4.242 4.242 13.301-13.3-4.243-4.243z"/></svg></button></header>
+					<header>{currentUser.username}<button className="icon" onClick={() => setIsNewMessageBoxOpen(true)}><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fillRule="evenodd" clipRule="evenodd"><path d="M8.071 21.586l-7.071 1.414 1.414-7.071 14.929-14.929 5.657 5.657-14.929 14.929zm-.493-.921l-4.243-4.243-1.06 5.303 5.303-1.06zm9.765-18.251l-13.3 13.301 4.242 4.242 13.301-13.3-4.243-4.243z"/></svg></button></header>
 					<ul>
 						{
-							recentChats.map(chat =>
+							recentChats.sort((a, b) => new Date(b.lastUpdated) - new Date(a.lastUpdated)).map(chat =>
 								<NavLink to={`/direct/t/${chat.id}`} activeClassName="selected" key={chat.id}>
-									<li key={chat.otherUser.uid}>
-										<span className="profile-pic"><img src={chat.otherUser.profilePic} alt={`${chat.otherUser.currentUser}'s profile pic`}></img></span>
+									<li key={chat.id}>
+										<span className="profile-pic"><img src={chat.users[0].profilePic} alt={`${chat.users[0].username}'s profile pic`}></img></span>
 										<div className="info">
-											<span className="username">{chat.otherUser.username}</span>
+											<span className="username">{chat.users[0].username}</span>
 											<div className="message">
-												<div>{chat.lastMessage.message}</div>
-												<span>• {formatDate(formatDistanceToNowStrict(fromUnixTime(chat.lastUpdated ? chat.lastUpdated.seconds : 0)))}</span>
+												<div>{chat.lastMessage?.message}</div>
+												{chat.lastUpdated && <span>• {formatDate(formatDistanceToNowStrict(new Date(chat.lastUpdated+"Z")))}</span>}
 											</div>
 										</div>
 									</li>

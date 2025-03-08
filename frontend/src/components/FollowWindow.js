@@ -1,26 +1,46 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import FollowButton from "./FollowButton";
 import VerifiedTick from "./VerifiedTick";
+import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { startLoading, stopLoading } from "../state/actions/isLoading";
+import { backend } from "../config";
+import { logOut } from "../helpers";
+import { setSnackbar } from "../state/actions/snackbar";
 
 const FollowWindow = props =>
 {
 	const { title, users, closeFollowListWindow, newMessage } = props;
+	const dispatch = useDispatch();
+	const history = useHistory();
 	const currentUser = useSelector(state => state.currentUser);
-	// const [list, setList] = useState(null);
 	const [isLoading, setIsLoading] = useState(false);
 
-	// const getRoomID = async (targetUid) => 
-	// {
-	// 	// TODO: Gets chat room ID of the current user and a target user
-	// };
-
-	// const handleStartChat = async (targetUid) =>
-	// {
-	// 	closeFollowListWindow();
-	// 	// TODO: Create a chat room in the database for a first-time chat
-	// };
+	const handleStartChat = async (targetUsername) =>
+	{
+		closeFollowListWindow();
+		dispatch(startLoading());
+		try {
+			const result = await fetch(`${backend}/chat/room`, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${localStorage.token}`,
+					"Content-Type": "application/json"
+				},
+				body: JSON.stringify([targetUsername])
+			});
+			if (result.status === 401)
+				return logOut(dispatch, history);
+			const resultJSON = await result.json();
+			if (!result.ok)
+				throw new Error(resultJSON.detail);
+			history.push(`/direct/t/${resultJSON.id}`);
+		} catch (err) {
+			dispatch(setSnackbar(err.message, "error"));
+		}
+		dispatch(stopLoading());
+	};
 
 	return(
 		<div className="backdrop container" onClick={closeFollowListWindow}>
@@ -49,32 +69,32 @@ const FollowWindow = props =>
 					:
 					<ul>
 						{
-							// newMessage
-							// 	?
-							// 	list.map(person => 
-							// 		<Link to={`/direct/t/${getRoomID(person.uid)}`} className="person" key={person.uid} onClick={() => handleStartChat(person.uid, getRoomID(person.uid))}>
-							// 			<div className="profile">
-							// 				<div className="profile-pic"><img src={person.profilePic} alt={`${person.username}'s Pic`}></img></div>
-							// 				<div className="info">
-							// 					<div style={{display: "flex"}}><span className="username">{person.username}</span></div>
-							// 					<span className="real-name">{person.realName}</span>
-							// 				</div>
-							// 			</div>
-							// 		</Link>
-							// 	)
-							// 	:
-							users.map(person => 
-								<li className="person" key={person.username}>
-									<div className="profile">
-										<Link to={`/${person.username}`}><div className="profile-pic"><img src={person.profilePic} alt={`${person.username}'s Pic`}></img></div></Link>
-										<div className="info">
-											<div style={{display: "flex"}}><Link to={`/${person.username}`} className="username">{person.username}</Link> <VerifiedTick user={person} size={15} marginLeft={7.5}/></div>
-											<span className="real-name">{person.realName}</span>
+							newMessage
+								?
+								users.map(person => 
+									<Link to="" className="person" key={person.username} onClick={() => handleStartChat(person.username)}>
+										<div className="profile">
+											<div className="profile-pic"><img src={person.profilePic} alt={`${person.username}'s Pic`}></img></div>
+											<div className="info">
+												<div style={{display: "flex"}}><span className="username">{person.username}</span></div>
+												<span className="real-name">{person.realName}</span>
+											</div>
 										</div>
-									</div>
-									{currentUser && currentUser.username === person.username ? null : <FollowButton target={person} startLoading={() => setIsLoading(true)} stopLoading={() => setIsLoading(false)}/>}
-								</li>
-							)
+									</Link>
+								)
+								:
+								users.map(person => 
+									<li className="person" key={person.username}>
+										<div className="profile">
+											<Link to={`/${person.username}`}><div className="profile-pic"><img src={person.profilePic} alt={`${person.username}'s Pic`}></img></div></Link>
+											<div className="info">
+												<div style={{display: "flex"}}><Link to={`/${person.username}`} className="username">{person.username}</Link> <VerifiedTick user={person} size={15} marginLeft={7.5}/></div>
+												<span className="real-name">{person.realName}</span>
+											</div>
+										</div>
+										{currentUser && currentUser.username === person.username ? null : <FollowButton target={person} startLoading={() => setIsLoading(true)} stopLoading={() => setIsLoading(false)}/>}
+									</li>
+								)
 						}
 					</ul>
 				}

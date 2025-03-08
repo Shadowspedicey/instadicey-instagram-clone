@@ -1,40 +1,58 @@
 import { useEffect, useRef, useState } from "react";
 import { useHistory } from "react-router";
 import { Link } from "react-router-dom";
-import { useSelector } from "react-redux";
-import { nanoid } from "nanoid";
+import { useDispatch, useSelector } from "react-redux";
+import * as signalR from "@microsoft/signalr";
 import Message from "./Message";
+import { backend } from "../../config";
+import { logOut } from "../../helpers";
+import { setSnackbar } from "../../state/actions/snackbar";
 
 const Room = ({roomID}) =>
 {
+	const dispatch = useDispatch();
 	const history = useHistory();
 	const currentUser = useSelector(state => state.currentUser);
 	const messageRef = useRef();
-	const [otherUser, setOtherUser] = useState(null);
+	const [roomInfo, setRoomInfo] = useState(null);
 	const [messages, setMessages] = useState(null);
 	const [isLoading, setIsLoading] = useState(false);
+	const [connection, setConnection] = useState(null);
 
-	const getOtherUserInfo = async () =>
-	{
-		try
-		{
-			// TODO: Get the other user's information and set it and return it
-		} catch (err)
-		{
-			console.error(err);
-			if (err.message === "Room doesn't exist")
-				history.push("/direct/inbox");
+	const getRoomInfo = async () => {
+		try {
+			const result = await fetch(`${backend}/chat/room?roomID=${roomID}`, {
+				headers: {
+					Authorization: `Bearer ${localStorage.token}`
+				}
+			});
+			if (result.status === 401)
+				return logOut(dispatch, history);
+			const resultJSON = await result.json();
+			if (!result.ok)
+				throw new Error(resultJSON.detail);
+			setRoomInfo(resultJSON);
+		} catch (err) {
+			dispatch(setSnackbar(err.message, "error"));
 		}
 	};
 
 	const getMessages = async () =>
 	{
-		try
-		{
-			// TODO: Get all the messages in the room as an array and set it
-		} catch (err)
-		{
-			console.error(err);
+		try {
+			const result = await fetch(`${backend}/chat/messages?roomID=${roomID}`, {
+				headers: {
+					Authorization: `Bearer ${localStorage.token}`
+				}
+			});
+			if (result.status === 401)
+				return logOut(dispatch, history);
+			const resultJSON = await result.json();
+			if (!result.ok)
+				throw new Error(resultJSON.detail);
+			setMessages(resultJSON);
+		} catch (err) {
+			dispatch(setSnackbar(err.message, "error"));
 		}
 	};
 
@@ -45,73 +63,58 @@ const Room = ({roomID}) =>
 		{
 			setIsLoading(true);
 			const message = messageRef.current.value;
-			const id = nanoid(32);
 			if (message.trim() === "") throw new Error("Message is empty");
 
-			// TODO: Send message
-			// await Promise.all(
-			// 	[
-			// 		setDoc(doc(db, "chats", roomID, "messages", id),
-			// 			{
-			// 				id,
-			// 				message,
-			// 				user: currentUser.user.uid,
-			// 				timestamp: serverTimestamp(),
-			// 			}),
-			// 		updateDoc(doc(db, "chats", roomID),
-			// 			{
-			// 				lastMessage: {id, message},
-			// 				lastUpdated: serverTimestamp(),
-			// 			})
-			// 	]
-			// );
+			await connection.invoke("SendMessage", message);
 
 			messageRef.current.value = "";
-			setIsLoading(false);
-		} catch (err)
-		{
+		} catch (err) {
 			console.error(err);
 		}
+		setIsLoading(false);
 	};
 
 	useEffect(() => document.title = "Instadicey • Chats");
 	useEffect(() =>
 	{
-		// TODO: RSignal stuff and WebSockets
-		// const q = query(collection(db, "chats", roomID, "messages"), orderBy("timestamp", "asc"));
-		// const unsubscribe = onSnapshot(q, querySnapshot => setMessages(querySnapshot.docs.map(doc => doc.data())));
+		const signalRConnection = new signalR.HubConnectionBuilder().withUrl(`${backend}/chat-hub?roomID=${roomID}`, { accessTokenFactory: () => localStorage.token }).withAutomaticReconnect().build();
+		signalRConnection.start().then(() => {
+			setConnection(signalRConnection);
+			signalRConnection.on("ReceiveMessage", msg => setMessages(prev => [...prev, msg]));
+		}).catch(err => {
+			if (err.statusCode === 401)
+				return logOut(dispatch, history);
+		});
 
-		// return () => unsubscribe();
-	}, [roomID]);
+		return () => signalRConnection.stop();
+	}, [roomID, dispatch, history]);
 
 	useEffect(() =>
 	{
 		const getData = async () =>
 		{
-			if (getOtherUserInfo())
-			{
-				getMessages();
-			}
+			await getRoomInfo();
+			await getMessages();
 		};
 		getData();
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [roomID]);
 
-	if (!otherUser || !messages) return null;
+	if (!messages || !connection) return null;
 	return(
 		<div className="chat-room">
-			<header><Link to={`/${otherUser.username}`} style={{display: "flex", alignItems: "center"}}><span className="profile-pic" style={{marginRight: "1rem"}}><img src={otherUser.profilePic} alt={`${otherUser.username}'s pic`}></img></span>{otherUser.username}</Link></header>
+			<header><Link to={`/${roomInfo.users[0].username}`} style={{display: "flex", alignItems: "center"}}><span className="profile-pic" style={{marginRight: "1rem"}}><img src={roomInfo.users[0].profilePic} alt={`${roomInfo.users[0].username}'s pic`}></img></span>{roomInfo.users[0].username}</Link></header>
 			<div className="messages">
 				<div className="container">
 					{
 						messages.map((message, i, messagesArray) => 
-							message.user === currentUser.user.uid 
-								? <Message messageInfo={message} userInfo={currentUser.info} noPhoto isSent key={message.id}/> 
+							message.user.username === currentUser.username 
+								? <Message messageInfo={message} noPhoto isSent key={message.id}/> 
 								: messagesArray[i + 1] 
-									? messagesArray[i].user === messagesArray[i + 1].user
-										? <Message messageInfo={message} userInfo={otherUser} noPhoto key={message.id}/>
-										: <Message messageInfo={message} userInfo={otherUser} key={message.id}/>
-									: <Message messageInfo={message} userInfo={otherUser} key={message.id}/>
+									? messagesArray[i].user.username === messagesArray[i + 1].user.username
+										? <Message messageInfo={message} noPhoto key={message.id}/>
+										: <Message messageInfo={message} key={message.id}/>
+									: <Message messageInfo={message} key={message.id}/>
 						)
 					}
 				</div>
