@@ -41,20 +41,20 @@ namespace InstagramClone.Services
 			if (chatRoom is null)
 				return Result.Fail(new CodedError(ErrorCode.NotFound, "Chat room between the two users doesn't exist."));
 
+			chatRoom.Users = [.. chatRoom.Users.Where(u => u.UserName != currentUser.UserName)];
 			return Result.Ok(chatRoom);
 		}
 
 		public async Task<Result<ICollection<ChatRoom>>> GetUserRooms(ClaimsPrincipal currentUserPrinciple)
 		{
 			User currentUser = await _dbContext.Users.FirstAsync(u => u.Id == currentUserPrinciple.FindFirstValue("sub"));
-			var chatRooms = (ICollection<ChatRoom>)(await _dbContext.ChatRooms
-				.AsNoTracking()
-				.Include(cr => cr.Messages)
+			var chatRooms = (await _dbContext.ChatRooms
 				.Where(cr => cr.Users.Contains(currentUser))
 				.ToListAsync())
 				.OrderByDescending(cr => cr.LastUpdated)
 				.ToList();
-			return Result.Ok(chatRooms);
+			chatRooms.ForEach(cr => cr.Users = [.. cr.Users.Where(u => u.UserName != currentUser.UserName)]);
+			return Result.Ok((ICollection<ChatRoom>)chatRooms);
 		}
 
 		public async Task<Result<ICollection<Message>>> GetMessages(ClaimsPrincipal currentUserPrinciple, string roomID)
