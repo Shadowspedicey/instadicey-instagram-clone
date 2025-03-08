@@ -1,11 +1,13 @@
 ﻿using InstagramClone.Data;
 using InstagramClone.Data.Entities;
 using InstagramClone.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
 
 namespace InstagramClone.Hubs
 {
+	[Authorize]
 	public class ChatHub(AppDbContext dbContext, IChatService chatService) : Hub
 	{
 		private readonly AppDbContext _dbContext = dbContext;
@@ -45,7 +47,8 @@ namespace InstagramClone.Hubs
 
 		public override async Task OnDisconnectedAsync(Exception? exception)
 		{
-			string roomID = Context.GetHttpContext()!.Request.Query["roomID"]!;
+			string? roomID = Context.GetHttpContext()!.Request.Query["roomID"];
+			if (roomID is null) return;
 
 			var connectionId = Context.ConnectionId;
 		

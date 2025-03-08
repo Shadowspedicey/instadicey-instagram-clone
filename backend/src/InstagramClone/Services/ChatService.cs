@@ -94,6 +94,7 @@ namespace InstagramClone.Services
 			chatRoom.Messages.Add(msg);
 			await _dbContext.SaveChangesAsync();
 			await _chatHub.Clients.Group(roomID).SendAsync("ReceiveMessage", msg.ToViewDTO(fileDownloadEndpoint));
+			await _chatHub.Clients.Users(chatRoom.Users.Select(u => u.Id)).SendAsync("UpdateRoom", chatRoom.ToViewDTO(fileDownloadEndpoint));
 			return Result.Ok(msg);
 		}
 	}
