@@ -10,6 +10,6 @@ namespace InstagramClone.Interfaces
 		public Task<Result<ChatRoom>> GetRoom(ClaimsPrincipal currentUserPrinciple, string? username = null, string? roomID = null);
 		public Task<Result<ICollection<ChatRoom>>> GetUserRooms(ClaimsPrincipal currentUserPrinciple);
 		public Task<Result<ICollection<Message>>> GetMessages(ClaimsPrincipal currentUserPrinciple, string roomID);
-		public Task<Result<Message>> SendMessage(ClaimsPrincipal currentUserPrinciple, string roomID, string message);
+		public Task<Result<Message>> SendMessage(ClaimsPrincipal currentUserPrinciple, string roomID, string message, string fileDownloadEndpoint = "");
 	}
 }

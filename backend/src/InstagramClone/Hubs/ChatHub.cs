@@ -10,11 +10,19 @@ namespace InstagramClone.Hubs
 	{
 		private readonly AppDbContext _dbContext = dbContext;
 		private readonly IChatService _chatService = chatService;
+		private string DownloadFileEndpoint
+		{
+			get
+			{
+				var httpContext = Context.GetHttpContext();
+				return $"{httpContext!.Request.Scheme}://{httpContext.Request.Host}/file/";
+			}
+		}
 		public async Task SendMessage(string message)
 		{
 			string? roomID = Context.GetHttpContext()!.Request.Query["roomID"];
 			if (roomID is null) return;
-			await _chatService.SendMessage(Context.User!, roomID, message);
+			await _chatService.SendMessage(Context.User!, roomID, message, DownloadFileEndpoint);
 		}
 
 		public override async Task OnConnectedAsync()

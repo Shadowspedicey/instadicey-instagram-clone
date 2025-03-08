@@ -79,7 +79,7 @@ namespace InstagramClone.Services
 			return Result.Ok(messages);
 		}
 
-		public async Task<Result<Message>> SendMessage(ClaimsPrincipal currentUserPrinciple, string roomID, string message)
+		public async Task<Result<Message>> SendMessage(ClaimsPrincipal currentUserPrinciple, string roomID, string message, string fileDownloadEndpoint = "")
 		{
 			User currentUser = await _dbContext.Users.FirstAsync(u => u.Id == currentUserPrinciple.FindFirstValue("sub"));
 			ChatRoom? chatRoom = await _dbContext.ChatRooms.FirstOrDefaultAsync(cr => cr.ID == roomID);
@@ -93,7 +93,7 @@ namespace InstagramClone.Services
 			Message msg = new() { Content = message, User = currentUser };
 			chatRoom.Messages.Add(msg);
 			await _dbContext.SaveChangesAsync();
-			await _chatHub.Clients.Group(roomID).SendAsync("ReceiveMessage", msg.Content);
+			await _chatHub.Clients.Group(roomID).SendAsync("ReceiveMessage", msg.ToViewDTO(fileDownloadEndpoint));
 			return Result.Ok(msg);
 		}
 	}
