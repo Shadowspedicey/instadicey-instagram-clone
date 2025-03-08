@@ -30,14 +30,21 @@ namespace InstagramClone.Services
 			return Result.Ok(chatRoom);
 		}
 
-		public async Task<Result<ChatRoom>> GetRoomWithUser(ClaimsPrincipal currentUserPrinciple, string username)
+		public async Task<Result<ChatRoom>> GetRoom(ClaimsPrincipal currentUserPrinciple, string? username = null, string? roomID = null)
 		{
 			User currentUser = await _dbContext.Users.FirstAsync(u => u.Id == currentUserPrinciple.FindFirstValue("sub"));
-			User? user = await _dbContext.Users.FirstOrDefaultAsync(u => u.UserName == username);
-			if (user is null)
-				return Result.Fail(new CodedError(ErrorCode.InvalidInput, $"The user: {username} was not found."));
+			ChatRoom? chatRoom = default;
+			if (roomID is not null)
+				chatRoom = await _dbContext.ChatRooms.FindAsync(roomID);
+			else
+			{
+				User? user = await _dbContext.Users.FirstOrDefaultAsync(u => u.UserName == username);
+				if (user is null)
+					return Result.Fail(new CodedError(ErrorCode.InvalidInput, $"The user: {username} was not found."));
 
-			ChatRoom? chatRoom = await _dbContext.ChatRooms.FirstOrDefaultAsync(cr => cr.Users.Contains(currentUser) && cr.Users.Contains(user));
+				chatRoom = await _dbContext.ChatRooms.FirstOrDefaultAsync(cr => cr.Users.Contains(currentUser) && cr.Users.Contains(user));
+			}
+
 			if (chatRoom is null)
 				return Result.Fail(new CodedError(ErrorCode.NotFound, "Chat room between the two users doesn't exist."));
 
