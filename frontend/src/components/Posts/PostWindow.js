@@ -126,7 +126,7 @@ const PostWindow = ({post, isVertical, refreshPost}) =>
 					<div className="dialog-box" onClick={e => e.stopPropagation()}>
 						{location.pathname !== "/" ? null : <button className="text" onClick={() => history.push(`/p/${post.id}`)}>Go to post</button>}
 						{location.pathname !== "/" ? null : <button className="text" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/#/p/${post.id}`); closeDialogBox(); }}>Copy Link</button>}
-						{currentUser.user.uid === post.user && <button className="remove text" onClick={deletePost}>Delete</button>}
+						{currentUser.username === post.user.username && <button className="remove text" onClick={deletePost}>Delete</button>}
 						<button className="cancel text" onClick={closeDialogBox}>Cancel</button>
 					</div>
 				</div>
