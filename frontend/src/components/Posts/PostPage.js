@@ -40,17 +40,26 @@ const PostPage = () =>
 				return newComment;
 			});
 			setPostData(resultJSON);
-			// getMorePosts(post);
+			await getMorePosts();
 		} catch (err)
 		{
 			console.error(err);
 		}
 	};
 
-	// const getMorePosts = async postData =>
-	// {
-	// 	// TODO: Gets other posts (max 6) from the same user
-	// };
+	const getMorePosts = async () =>
+	{
+		try {
+			const result = await fetch(`${backend}/post/${postID}/more`);
+			const resultJSON = await result.json();
+			if (!result.ok)
+				throw new Error(resultJSON.detail, { cause: resultJSON.errors });
+
+			setMorePosts(resultJSON);
+		} catch {
+
+		}
+	};
 
 	useEffect(() =>
 	{

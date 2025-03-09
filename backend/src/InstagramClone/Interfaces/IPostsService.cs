@@ -9,6 +9,7 @@ namespace InstagramClone.Interfaces
 	{
 		public Task<Result<Post>> CreatePost(ClaimsPrincipal user, PostCreateDTO postDTO, CancellationToken cancellationToken);
 		public Task<Result<Post>> GetPost(string postID);
+		public Task<Result<ICollection<Post>>> GetMorePosts(string postID);
 		public Task<Result> DeletePost(ClaimsPrincipal user, string postID);
 		public Task<Result<ICollection<Comment>>> GetPostsComments(string postID);
 

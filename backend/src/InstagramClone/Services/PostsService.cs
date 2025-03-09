@@ -73,6 +73,16 @@ namespace InstagramClone.Services
 			return post == null ? Result.Fail(new CodedError(ErrorCode.NotFound, "Post was not found.")) : Result.Ok(post);
 		}
 
+		public async Task<Result<ICollection<Post>>> GetMorePosts(string postID)
+		{
+			Post? post = await _dbContext.Posts.FindAsync(postID);
+			if (post is null)
+				return Result.Fail(new CodedError(ErrorCode.NotFound, "Post was not found."));
+
+			ICollection<Post> recentPosts = [.. post.User.Posts.Where(p => p != post).OrderByDescending(p => p.CreatedAt).Take(3)];
+			return Result.Ok(recentPosts);
+		}
+
 		public Task<Result<ICollection<Comment>>> GetPostsComments(string postID)
 		{
 			throw new NotImplementedException();

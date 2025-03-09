@@ -36,6 +36,14 @@ namespace InstagramClone.Controllers
 				return this.ProblemWithErrors(statusCode: 400, errors: result.Errors.Select(e => e.Metadata));
 		}
 
+		[HttpGet("{postID}/more")]
+		public async Task<IActionResult> GetMorePosts(string postID)
+		{
+			var result = await _postsService.GetMorePosts(postID);
+
+			return result.IsSuccess ? Ok(result.Value.Select(p => p.ToMinimalDTO(DownloadFileEndpoint))) : this.AppropriateResponseBasedOnResult(result);
+		}
+
 		[Authorize]
 		[HttpPost("delete/{postID}")]
 		public async Task<IActionResult> DeletePost(string postID)
