@@ -66,7 +66,8 @@ const Inbox = () =>
 			const resultJSON = await result.json();
 			if (!result.ok)
 				throw new Error(resultJSON.detail, { cause: resultJSON.errors });
-			setCurrentUserFollows({following: resultJSON.following, followers: resultJSON.followers});
+			const followingAndFollowers = [...resultJSON.following, ...resultJSON.followers];
+			setCurrentUserFollows([...new Map(followingAndFollowers.map(u => [u.username, u])).values()]);
 		} catch (err) {
 			dispatch(setSnackbar(err.message));
 		}
@@ -115,7 +116,7 @@ const Inbox = () =>
 		return(
 			<div className="inbox-window outlined">
 				{ isNewMessageBoxOpen &&
-						<FollowWindow title="New Message" users={[...currentUserFollows.following, ...currentUserFollows.followers]} closeFollowListWindow={closeNewMessageBox} newMessage/>
+						<FollowWindow title="New Message" users={currentUserFollows} closeFollowListWindow={closeNewMessageBox} newMessage/>
 				}
 				<div className="container">
 					<Switch>
@@ -152,7 +153,7 @@ const Inbox = () =>
 	else return(
 		<div className="inbox-window outlined">
 			{ isNewMessageBoxOpen &&
-					<FollowWindow title="New Message" users={[...currentUserFollows.following, ...currentUserFollows.followers]} closeFollowListWindow={closeNewMessageBox} newMessage/>
+					<FollowWindow title="New Message" users={currentUserFollows} closeFollowListWindow={closeNewMessageBox} newMessage/>
 			}
 			<div className="container">
 				<div className="recent-chats left">
