@@ -114,7 +114,6 @@ const SignUpPage = () =>
 			});
 		} catch (err)
 		{
-			console.log(err);
 			const errors = err.cause ?? [];
 			const errorMessages = [];
 			for (var i = 0; i < errors.length; i++)

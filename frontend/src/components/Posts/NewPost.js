@@ -51,7 +51,6 @@ const NewPost = () =>
 			dispatch(startLoading());
 			const caption = captionRef.current.value;
 			const croppedPhoto = await getCroppedImg(photoUrl, croppedAreaPixels, rotation);
-			console.log(croppedPhoto instanceof File);
 			const formData = new FormData();
 			formData.append("caption", caption);
 			formData.append("photo", croppedPhoto, photo.name);
@@ -63,7 +62,6 @@ const NewPost = () =>
 				body: formData
 			});
 			const resultJSON = await result.json();
-			console.log(resultJSON);
 			if (result.status === 401)
 				return logOut(dispatch, history);
 

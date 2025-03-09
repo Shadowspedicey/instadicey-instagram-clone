@@ -39,7 +39,6 @@ const HomePage = () =>
 				if (result.status === 401)
 					return logOut(dispatch, history);
 				const resultJSON = await result.json();
-				console.log(resultJSON);
 				if (!result.ok)
 					throw new Error(resultJSON.detail);
 

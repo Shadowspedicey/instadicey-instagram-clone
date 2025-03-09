@@ -63,7 +63,6 @@ const AccountVerification = () =>
 			else
 			{
 				const errors = err.cause;
-				console.log(err);
 				if (!email || !token)
 					setErrorMsg("Email or token missing.");
 				else if (errors.length)
