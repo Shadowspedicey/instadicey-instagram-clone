@@ -153,7 +153,7 @@ const PostWindow = ({post, isVertical, refreshPost}) =>
 						<span className="likes" onClick={() => setLikesWindow(post.likes)}><span className="number">{post.likes.length}</span> likes</span>
 					</div>
 					<div className="comments">
-						{ post.caption.length === 0 ||
+						{ post.caption?.length === 0 ||
 							<Comment
 								commentData={{user: post.user, comment: post.caption, timestamp: post.timestamp}}
 								noLike
