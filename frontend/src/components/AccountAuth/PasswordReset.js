@@ -21,7 +21,7 @@ const PasswordReset = () =>
 	useEffect(() => {
 		localStorage.removeItem("token");
 		dispatch(setUser(null));
-	}, []);
+	}, [dispatch]);
 
 	const checkEmail = () =>
 	{

@@ -13,7 +13,6 @@ const PostPage = () =>
 	const { postID } = useParams();
 	const dispatch = useDispatch();
 	const [postData, setPostData] = useState(null);
-	// TODO
 	const [morePosts, setMorePosts] = useState(null);
 	const [isSmallScreen, setIsSmallScreen] = useState(false);
 	const handleResize = () => window.innerWidth < 1024 ? setIsSmallScreen(true) : setIsSmallScreen(false);
@@ -23,6 +22,8 @@ const PostPage = () =>
 		window.addEventListener("resize", handleResize);
 		return () => window.removeEventListener("resize", handleResize);
 	}, []);
+
+	useEffect(() => document.title = "Instadicey", []);
 
 	const getPostData = async () =>
 	{

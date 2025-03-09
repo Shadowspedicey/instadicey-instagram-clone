@@ -1,12 +1,11 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useRef, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { startLoading, stopLoading } from "../../state/actions/isLoading";
 import Logo from "../../assets/logo.png";
 import greenCheckmark from "../../assets/misc/green-checkmark.png";
 import redX from "../../assets/misc/red-x.png";
 import { backend } from "../../config";
-import { setSnackbar } from "../../state/actions/snackbar";
 import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import { logOut, refreshOrLogout } from "../../helpers";
 
@@ -25,7 +24,6 @@ const AccountVerification = () =>
 	const passwordRef = useRef();
 	const confirmPasswordRef = useRef();
 	const [passwordResetDone, setPasswordResetDone] = useState(false);
-	const [passwordResetEmail, setPasswordResetEmail] = useState("");
 	const [isInfoValid, setIsInfoValid] = useState(false);
 
 	useEffect(() => document.title = "Verification • Instadicey", []);

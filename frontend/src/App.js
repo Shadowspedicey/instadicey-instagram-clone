@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Route, Switch, useLocation } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
 import { Snackbar, Slide, Alert } from "@mui/material";
-import { stopLoading } from "./state/actions/isLoading";
 import { setUser } from "./state/actions/currentUser";
 import jwt from "jsonwebtoken";
 import { closeSnackbar, setSnackbar } from "./state/actions/snackbar";
@@ -60,7 +59,7 @@ const App = () =>
 	useEffect(() =>
 	{
 		// 5 min interval
-		if (isLoggedIn)
+		if (localStorage.token)
 		{
 			const refreshTokenInterval = setInterval(async () => {
 				try {
@@ -72,7 +71,7 @@ const App = () =>
 			}, 4*60*1000);
 			return () => clearInterval(refreshTokenInterval);
 		}
-	}, [isLoggedIn]);
+	}, [dispatch, history]);
 
 	return (
 		<div className="App" style={navbarVisibility ? { paddingTop: "75px" } : null}>

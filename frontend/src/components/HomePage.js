@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { startLoading, stopLoading } from "../state/actions/isLoading";
 import PostWindow from "./Posts/PostWindow";
 import { backend } from "../config";
@@ -11,19 +11,17 @@ const HomePage = () =>
 	const postsRef = useRef();
 	const dispatch = useDispatch();
 	const history = useHistory();
-	const currentUser = useSelector(state => state.currentUser);
-	//const [maxDate, setMaxDate] = useState(null);
-	const [scroll, setScroll] = useState(0);
+	// const [scroll, setScroll] = useState(0);
 	const [olderPosts, setOlderPosts] = useState(null);
 	const [postsToDisplay, setPostsToDisplay] = useState(null);
 
-	const handleScroll = () =>
-	{
-		const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
-		const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-  	setScroll(winScroll / height * 100);
-	};
-	useEffect(handleScroll, []);
+	// const handleScroll = () =>
+	// {
+	// 	const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+	// 	const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+  	// setScroll(winScroll / height * 100);
+	// };
+	// useEffect(handleScroll, []);
 
 	useEffect(() => document.title = "Instadicey", []);
 	useEffect(() =>
@@ -55,28 +53,16 @@ const HomePage = () =>
 			dispatch(stopLoading());
 		};
 		getPosts();
-	}, []);
+	}, [dispatch, history]);
 
 	// useEffect(() =>
 	// {
-	// 	if (scroll < 75 || !maxDate || olderPosts) return;
-
-	// 	const getOlderPosts = async () =>
+	// 	window.addEventListener("scroll", handleScroll);
+	// 	return () =>
 	// 	{
-	// 		// TODO: Make sure user following count > 0 and if so, get posts older than 3 days and set them (setOlderPosts)
+	// 		window.removeEventListener("scroll", handleScroll);
 	// 	};
-	// 	getOlderPosts();
-	// // eslint-disable-next-line react-hooks/exhaustive-deps
-	// }, [scroll, currentUser, maxDate]);
-
-	useEffect(() =>
-	{
-		window.addEventListener("scroll", handleScroll);
-		return () =>
-		{
-			window.removeEventListener("scroll", handleScroll);
-		};
-	}, [postsRef]);
+	// }, [postsRef]);
 
 	if (!postsToDisplay) return null;
 	return(
