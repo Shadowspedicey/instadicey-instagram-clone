@@ -35,6 +35,15 @@ namespace InstagramClone.Services
 			return Result.Ok(users);
 		}
 
+		public async Task<Result<ICollection<Post>>> GetUserFeed(ClaimsPrincipal currentUserPrincipal)
+		{
+			User currentUser = (await _dbContext.Users.FindAsync(currentUserPrincipal.FindFirstValue("sub")))!;
+
+			ICollection<Post> posts = [.. currentUser.Following.SelectMany(u => u.Posts).OrderByDescending(p => p.CreatedAt).Take(30)];
+
+			return Result.Ok(posts);
+		}
+
 		public async Task<Result> EditUserData(ClaimsPrincipal currentUserPrincipal, UserEditDTO userDataDTO)
 		{
 			User currentUser = (await _dbContext.Users.FindAsync(currentUserPrincipal.FindFirstValue("sub")))!;

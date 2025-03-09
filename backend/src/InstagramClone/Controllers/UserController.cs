@@ -43,6 +43,14 @@ namespace InstagramClone.Controllers
 			return result.IsSuccess ? NoContent() : this.AppropriateResponseBasedOnResult(result);
 		}
 
+		[HttpGet("feed")]
+		public async Task<IActionResult> GetFeed()
+		{
+			var result = await _userService.GetUserFeed(User);
+
+			return result.IsSuccess ? Ok(result.Value.Select(p => p.ToDTO(DownloadFileEndpoint))) : this.AppropriateResponseBasedOnResult(result);
+		}
+
 		[HttpPost("edit/profile-pic")]
 		public async Task<IActionResult> UpdateProfilePic([MaxFileSize(10)] [ImageOnly] IFormFile newProfilePic, CancellationToken cancellationToken)
 		{

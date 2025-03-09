@@ -2,13 +2,17 @@ import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { startLoading, stopLoading } from "../state/actions/isLoading";
 import PostWindow from "./Posts/PostWindow";
+import { backend } from "../config";
+import { logOut } from "../helpers";
+import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 
 const HomePage = () =>
 {
 	const postsRef = useRef();
 	const dispatch = useDispatch();
-	const currentUser = useSelector(state => state.currentUser.info);
-	const [maxDate, setMaxDate] = useState(null);
+	const history = useHistory();
+	const currentUser = useSelector(state => state.currentUser);
+	//const [maxDate, setMaxDate] = useState(null);
 	const [scroll, setScroll] = useState(0);
 	const [olderPosts, setOlderPosts] = useState(null);
 	const [postsToDisplay, setPostsToDisplay] = useState(null);
@@ -26,25 +30,44 @@ const HomePage = () =>
 	{
 		const getPosts = async () =>
 		{
-			if (!currentUser) return;
+			if (!localStorage.token) return;
 			dispatch(startLoading());
-			// TODO: Make sure user following count > 0 and if so, get user feed (not older than 3 days) and set it (setPostsToDisplay)
+			try {
+				const result = await fetch(`${backend}/user/feed`, {
+					headers: {
+						Authorization: `Bearer ${localStorage.token}`
+					}
+				});
+				if (result.status === 401)
+					return logOut(dispatch, history);
+				const resultJSON = await result.json();
+				console.log(resultJSON);
+				if (!result.ok)
+					throw new Error(resultJSON.detail);
+
+				const threeDaysAgo = new Date();
+  				threeDaysAgo.setUTCDate(threeDaysAgo.getUTCDate() - 3);
+				setPostsToDisplay(resultJSON.filter(p => new Date(p.createdAt+"Z") >= threeDaysAgo));
+				setOlderPosts(resultJSON.filter(p => new Date(p.createdAt+"Z") < threeDaysAgo));
+			} catch {
+
+			}
 			dispatch(stopLoading());
 		};
 		getPosts();
-	}, [currentUser, dispatch]);
+	}, []);
 
-	useEffect(() =>
-	{
-		if (scroll < 75 || !maxDate || olderPosts) return;
+	// useEffect(() =>
+	// {
+	// 	if (scroll < 75 || !maxDate || olderPosts) return;
 
-		const getOlderPosts = async () =>
-		{
-			// TODO: Make sure user following count > 0 and if so, get posts older than 3 days and set them (setOlderPosts)
-		};
-		getOlderPosts();
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [scroll, currentUser, maxDate]);
+	// 	const getOlderPosts = async () =>
+	// 	{
+	// 		// TODO: Make sure user following count > 0 and if so, get posts older than 3 days and set them (setOlderPosts)
+	// 	};
+	// 	getOlderPosts();
+	// // eslint-disable-next-line react-hooks/exhaustive-deps
+	// }, [scroll, currentUser, maxDate]);
 
 	useEffect(() =>
 	{
@@ -63,7 +86,7 @@ const HomePage = () =>
 				<div className="posts" ref={postsRef}>
 					{
 						postsToDisplay.map(post =>
-							<PostWindow postID={post.id} isVertical key={post.id}/>)
+							<PostWindow post={post} isVertical key={post.id}/>)
 					}
 				</div>
 			}
@@ -72,7 +95,7 @@ const HomePage = () =>
 						<h2>Showing posts older than 3 days</h2>
 						{
 							olderPosts.map(post =>
-								<PostWindow postID={post.id} isVertical key={post.id}/>)
+								<PostWindow post={post} isVertical key={post.id}/>)
 						}
 					</div>
 			}
