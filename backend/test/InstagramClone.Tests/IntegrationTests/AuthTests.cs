@@ -3,12 +3,14 @@ using InstagramClone.Data.Entities;
 using InstagramClone.DTOs.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System.Net;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -204,6 +206,62 @@ namespace InstagramClone.Tests.IntegrationTests
 
 
 			Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+		}
+
+		[Fact]
+		public async Task SendEmailChangeRequest_ShouldReturn404_WhenGuest()
+		{
+			var client = _fixture.CreateClient();
+			string? token = await LoginAsGuest(client);
+
+			client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+			var emailChangeRequestResponse = await client.PostAsJsonAsync("auth/send-email-change-verification", new {Email = "example@domain.com", Password = "password"});
+
+			Assert.Equal(HttpStatusCode.Forbidden, emailChangeRequestResponse.StatusCode);
+		}
+
+		[Fact]
+		public async Task ChangePassword_ShouldReturn404_WhenGuest()
+		{
+			var client = _fixture.CreateClient();
+			string? token = await LoginAsGuest(client);
+
+			client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+			var emailChangeRequestResponse = await client.PostAsJsonAsync("auth/change-password", new {CurrentPassword = "currentPassword", NewPassword = "newPassword"});
+			
+			Assert.Equal(HttpStatusCode.Forbidden, emailChangeRequestResponse.StatusCode);
+		}
+
+		[Fact]
+		public async Task ChatHub_ShouldReturn404_WhenGuest()
+		{
+			var client = _fixture.CreateClient();
+			var connection = new HubConnectionBuilder()
+				.WithUrl("http://localhost/chat-hub", options =>
+				{
+					options.HttpMessageHandlerFactory = _ => _fixture.Server.CreateHandler();
+					options.AccessTokenProvider = async () => await LoginAsGuest(client);
+				})
+				.WithAutomaticReconnect()
+				.Build();
+
+
+			try
+			{
+				await connection.StartAsync();
+			}
+			catch (HttpRequestException ex)
+			{
+				Assert.Equal(HttpStatusCode.Forbidden, ex.StatusCode);
+			}
+		}
+
+		private static async Task<string?> LoginAsGuest(HttpClient client)
+		{
+			var loginResponse = await client.PostAsJsonAsync("auth/login", new { email = "guest@instadicey.com", password = "" });
+			loginResponse.EnsureSuccessStatusCode();
+			var loginResponseJson = JsonSerializer.Deserialize<JsonNode>(await loginResponse.Content.ReadAsStreamAsync());
+			return loginResponseJson?["token"]?.ToString();
 		}
 	}
 	
