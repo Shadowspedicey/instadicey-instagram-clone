@@ -70,6 +70,10 @@ builder.Services.AddAuthorization(options =>
 	{
 		policyBuilder.AddRequirements(new IsInChatRoomRequirement());
 	});
+	options.AddPolicy("IsNotGuest", policyBuilder =>
+	{
+		policyBuilder.AddRequirements(new IsNotGuestRequirement());
+});
 });
 builder.Services.AddIdentityCore<User>(options =>
 {
@@ -115,12 +119,14 @@ builder.Services.AddScoped<ILikeService, LikeService>();
 builder.Services.AddSingleton<UserConnectionManager>();
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddSingleton<IUserIdProvider, UserIDProvider>();
+builder.Services.AddHostedService<GuestBackgroundService>();
 
 // Authorization handlers
 builder.Services.AddSingleton<IAuthorizationHandler, IsPostOwnerHandler>();
 builder.Services.AddSingleton<IAuthorizationHandler, IsCommentsPostOwnerHandler>();
 builder.Services.AddSingleton<IAuthorizationHandler, IsCommentOwnerHandler>();
 builder.Services.AddSingleton<IAuthorizationHandler, IsInChatRoomHandler>();
+builder.Services.AddSingleton<IAuthorizationHandler, IsNotGuestHandler>();
 
 var app = builder.Build();
 

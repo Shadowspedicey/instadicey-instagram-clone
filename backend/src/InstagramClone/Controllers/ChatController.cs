@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace InstagramClone.Controllers
 {
 	[Route("[controller]")]
-	[Authorize]
+	[Authorize("IsNotGuest")]
 	[ApiController]
 	public class ChatController(IChatService chatService) : ControllerBase
 	{

@@ -30,3 +30,5 @@ This ERD was made using [ERDPlus](https://erdplus.com/).
 ✅ AES Encryption - Encryptes file paths so that the paths are not exposed when being retreived
 
 ✅ SignalR - Real-time messaging
+
+✅ Guest Account - Users can use a guest account to use the application without creating an account (NOTE: This guest account is reset every interval, which has a default value of 5 minutes)

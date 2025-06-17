@@ -53,7 +53,7 @@ namespace InstagramClone.Controllers
 				return Ok();
 		}
 
-		[Authorize]
+		[Authorize("IsNotGuest")]
 		[HttpPost("send-email-change-verification")]
 		public async Task<IActionResult> SendEmailChangeRequest(EmailChangeDTO emailChangeDTO)
 		{
@@ -63,7 +63,7 @@ namespace InstagramClone.Controllers
 			return NoContent();
 		}
 
-		[Authorize]
+		[Authorize("IsNotGuest")]
 		[HttpPost("confirm-email-change")]
 		public async Task<IActionResult> ConfirmEmailChange(string newEmail, string code)
 		{
@@ -73,7 +73,7 @@ namespace InstagramClone.Controllers
 			return NoContent();
 		}
 
-		[Authorize]
+		[Authorize("IsNotGuest")]
 		[HttpPost("change-password")]
 		public async Task<IActionResult> ChangePassword(PasswordChangeDTO passwordChangeDTO)
 		{

@@ -7,7 +7,7 @@ using System.Security.Claims;
 
 namespace InstagramClone.Hubs
 {
-	[Authorize]
+	[Authorize("IsNotGuest")]
 	public class ChatHub(AppDbContext dbContext, IChatService chatService) : Hub
 	{
 		private readonly AppDbContext _dbContext = dbContext;
