@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System.Net;
 using System.Text;
@@ -14,10 +15,10 @@ using System.Text.Json.Nodes;
 
 namespace InstagramClone.Tests.IntegrationTests
 {
-	public class AuthTests : IClassFixture<WebApplicationFactory<Program>>
+	public class AuthTests : IClassFixture<AuthTestsWebApplicationFactory>
 	{
-		private readonly WebApplicationFactory<Program> _fixture;
-		public AuthTests(WebApplicationFactory<Program> fixture)
+		private readonly AuthTestsWebApplicationFactory _fixture;
+		public AuthTests(AuthTestsWebApplicationFactory fixture)
 		{
 			_fixture = fixture;
 		}
@@ -214,9 +215,14 @@ namespace InstagramClone.Tests.IntegrationTests
 			_connection = new SqliteConnection("DataSource=:memory:");
 			_connection.Open();
 
+			builder.ConfigureAppConfiguration((context, config) =>
+			{
+				config.AddUserSecrets<AuthTests>();
+			});
 			builder.ConfigureTestServices(services =>
 			{
 				services.RemoveAll<DbContextOptions<AppDbContext>>();
+				services.Remove(services.SingleOrDefault(d => d.ServiceType == typeof(IDbContextOptionsConfiguration<AppDbContext>))!);
 				services.AddDbContext<AppDbContext>(options => options.UseSqlite(_connection));
 			});
 		}

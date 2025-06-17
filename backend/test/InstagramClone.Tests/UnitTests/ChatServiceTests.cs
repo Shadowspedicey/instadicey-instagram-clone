@@ -288,7 +288,7 @@ namespace InstagramClone.Tests.UnitTests
 			mockHubContext.Setup(ctx => ctx.Clients).Returns(mockHubClients.Object);
 			mockHubClients.Setup(clients => clients.Group(It.IsAny<string>())).Returns(mockClientProxy.Object);
 			mockHubClients.Setup(clients => clients.User(It.IsAny<string>())).Returns(mockClientProxy.Object);
-			mockHubClients.Setup(clients => clients.Users(It.IsAny<ICollection<string>>())).Returns(mockClientProxy.Object);
+			mockHubClients.As<IHubClients>().Setup(clients => clients.Users(It.IsAny<IReadOnlyList<string>>())).Returns(mockClientProxy.Object);
 			ChatService chatService = new(_dbContext, authorizationServiceMock.Object, mockHubContext.Object);
 
 			string message = "msg";
