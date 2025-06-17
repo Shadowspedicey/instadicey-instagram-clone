@@ -35,6 +35,7 @@ namespace InstagramClone.Controllers
 		}
 
 		[EditDTOUsernameLowercaseFilter]
+		[NoGuestUsernameChangeFilter]
 		[HttpPost("edit")]
 		public async Task<IActionResult> Edit(UserEditDTO userData)
 		{

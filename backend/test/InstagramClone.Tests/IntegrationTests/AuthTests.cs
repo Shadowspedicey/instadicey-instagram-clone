@@ -233,6 +233,30 @@ namespace InstagramClone.Tests.IntegrationTests
 		}
 
 		[Fact]
+		public async Task ChangeUsername_ShouldReturn404_WhenGuest()
+		{
+			var client = _fixture.CreateClient();
+			string? token = await LoginAsGuest(client);
+
+			client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+			var changeUsernameResponse = await client.PostAsJsonAsync("user/edit", new { Username = "newUsername", RealName = "anything", Bio = "anything" });
+
+			Assert.Equal(HttpStatusCode.Forbidden, changeUsernameResponse.StatusCode);
+		}
+
+		[Fact]
+		public async Task EditUserData_ShouldReturn204_WhenGuest()
+		{
+			var client = _fixture.CreateClient();
+			string? token = await LoginAsGuest(client);
+
+			client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+			var changeUsernameResponse = await client.PostAsJsonAsync("user/edit", new { Username = "guest", RealName = "anything", Bio = "anything" });
+
+			Assert.Equal(HttpStatusCode.OK, changeUsernameResponse.StatusCode);
+		}
+
+		[Fact]
 		public async Task ChatHub_ShouldReturn404_WhenGuest()
 		{
 			var client = _fixture.CreateClient();
