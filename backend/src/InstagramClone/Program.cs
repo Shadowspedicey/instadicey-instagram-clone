@@ -16,18 +16,15 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration["FrontendOrigin"] = Helpers.GetHostFromURL(builder.Configuration["Frontend"] ?? throw new ArgumentNullException("FrontendOrigin", "Frontend origin has to be set in appsettings.json for CORS to be configured."));
 
-var signingKeys = builder.Configuration.GetRequiredSection("Authentication:Schemes:Bearer:SigningKeys").GetChildren().ToList();
+var signingKeys = builder.Configuration.GetRequiredSection("Authentication:Schemes:Bearer:SigningKeys").GetChildren().ToList().Select(sk => new SymmetricSecurityKey(Convert.FromBase64String(sk?["Value"])));
+//Console.WriteLine(JsonSerializer.Serialize(builder.Configuration.GetRequiredSection("Authentication:Schemes:Bearer:SigningKeys")));
 var jwtValidationParameters = new TokenValidationParameters
 {
 	ValidateIssuer = false,
 	ValidateAudience = false,
 	ValidateIssuerSigningKey = true,
 	ClockSkew = TimeSpan.Zero,
-	IssuerSigningKeys = new List<SecurityKey>
-	{
-		new SymmetricSecurityKey(Convert.FromBase64String(signingKeys[0]["Value"])),
-		new SymmetricSecurityKey(Convert.FromBase64String(signingKeys[1]["Value"]))
-	}
+	IssuerSigningKeys = signingKeys
 };
 builder.Services.AddSingleton(jwtValidationParameters);
 

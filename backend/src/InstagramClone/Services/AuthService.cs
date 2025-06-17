@@ -183,7 +183,7 @@ namespace InstagramClone.Services
 
 		public string GenerateToken(string downloadFileEndpoint = "", User? user = null)
 		{
-			var securityKey = new SymmetricSecurityKey(Convert.FromBase64String(_configuration["Authentication:Schemes:Bearer:SigningKeys:1:Value"]));
+			var securityKey = new SymmetricSecurityKey(Convert.FromBase64String(_configuration["Authentication:Schemes:Bearer:SigningKeys:0:Value"]));
 			var signingCredentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
 			var claims = new List<Claim>()
