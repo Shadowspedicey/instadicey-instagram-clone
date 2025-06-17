@@ -5,11 +5,13 @@ import { useMediaQuery } from "react-responsive";
 import ChangePassword from "./ChangePassword";
 import EditProfile from "./EditProfile";
 import "./acc-edit.css";
+import { useSelector } from "react-redux";
 
 const AccountEdit = () =>
 {
 	const history = useHistory();
 	const phoneQuery = useMediaQuery({query: "(max-width: 600px)"});
+	const currentUser = useSelector(state => state.currentUser);
 
 	useEffect(() =>
 	{
@@ -24,13 +26,13 @@ const AccountEdit = () =>
 			{ !phoneQuery &&
 				<ul className="sidebar">
 					<li><NavLink exact to="/accounts/edit" activeClassName="selected">Edit Profile</NavLink></li>
-					<li><NavLink to="/accounts/password/change" activeClassName="selected">Change Password</NavLink></li>
+					{currentUser.username !== "guest" && <li><NavLink to="/accounts/password/change" activeClassName="selected">Change Password</NavLink></li>}
 				</ul>
 			}
 			<div className="main">
 				<Switch>
 					<Route exact path="/accounts/edit" component={EditProfile}></Route>
-					<Route exact path="/accounts/password/change" component={ChangePassword}></Route>
+					{currentUser.username !== "guest" && <Route exact path="/accounts/password/change" component={ChangePassword}></Route>}
 				</Switch>
 			</div>
 		</div>

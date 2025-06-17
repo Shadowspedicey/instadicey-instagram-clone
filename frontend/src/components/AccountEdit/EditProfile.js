@@ -221,12 +221,14 @@ const EditProfile = () =>
 						<p>Help people discover your account by using the name you're known by: either your full name, nickname, or business name.</p>
 					</div>
 				</div>
-				<div className="element">
-					<label htmlFor="username" className="left">Username</label>
-					<div className="right">
-						<input type="text" id="username" defaultValue={currentUser.username} placeholder="Username" ref={usernameRef} className="outlined" onChange={handleChange}></input>
+				{ currentUser.username !== "guest" &&
+					<div className="element">
+						<label htmlFor="username" className="left">Username</label>
+						<div className="right">
+							<input type="text" id="username" defaultValue={currentUser.username} placeholder="Username" ref={usernameRef} className="outlined" onChange={handleChange}></input>
+						</div>
 					</div>
-				</div>
+				}
 				<div className="element">
 					<label htmlFor="bio" className="left">Bio</label>
 					<div className="right">
@@ -242,33 +244,35 @@ const EditProfile = () =>
 					}
 				</div>
 			</form>
-			<form onSubmit={handleEmailChange}>
-				<div className="element info">
-					<span className="left"></span>
-					<div className="right">
-						<p className="header">Personal Information</p>
-						<p>Provide your personal information, even if the account is used for a business, a pet or something else. This won't be a part of your public profile.</p>
+			{ currentUser.username !== "guest" &&
+				<form onSubmit={handleEmailChange}>
+					<div className="element info">
+						<span className="left"></span>
+						<div className="right">
+							<p className="header">Personal Information</p>
+							<p>Provide your personal information, even if the account is used for a business, a pet or something else. This won't be a part of your public profile.</p>
+						</div>
 					</div>
-				</div>
-				<div className="element">
-					<label htmlFor="email" className="left">Email</label>
-					<div className="right">
-						<input type="text" id="email" defaultValue={currentUser.email} placeholder="Email" ref={emailRef} className="outlined" onChange={() => isEmailValid ? null : setIsEmailValid(true)}></input>
-						{ !emailRef.current || currentUser.email === emailRef.current.value
-							? null 
-							: <input type="password" id="password" placeholder="Confirm Password" ref={confirmPasswordRef} className="outlined"></input>
+					<div className="element">
+						<label htmlFor="email" className="left">Email</label>
+						<div className="right">
+							<input type="text" id="email" defaultValue={currentUser.email} placeholder="Email" ref={emailRef} className="outlined" onChange={() => isEmailValid ? null : setIsEmailValid(true)}></input>
+							{ !emailRef.current || currentUser.email === emailRef.current.value
+								? null 
+								: <input type="password" id="password" placeholder="Confirm Password" ref={confirmPasswordRef} className="outlined"></input>
+							}
+						</div>
+					</div>
+					<div className="element">
+						<div className="left"></div>
+						{
+							isLoadingEmail
+								? <button className="loading"><div><img src={Loading} alt="loading"></img></div></button>
+								: <button className={`submit ${isEmailValid ? null : "disabled"}`}>Submit</button>
 						}
 					</div>
-				</div>
-				<div className="element">
-					<div className="left"></div>
-					{
-						isLoadingEmail
-							? <button className="loading"><div><img src={Loading} alt="loading"></img></div></button>
-							: <button className={`submit ${isEmailValid ? null : "disabled"}`}>Submit</button>
-					}
-				</div>
-			</form>
+				</form>
+			}
 		</div>
 	);
 };
