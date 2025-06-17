@@ -44,5 +44,12 @@ namespace InstagramClone.Services
 			if (File.Exists(fullPath))
 				File.Delete(fullPath);
 		}
+
+		public void DeleteFolder(string path)
+		{
+			string fullPath = Path.GetFullPath($"{_configuration["AppDataFolderName"]}\\{path}");
+			if (Directory.Exists(fullPath))
+				Directory.Delete(fullPath, recursive: true);
+		}
 	}
 }

@@ -8,5 +8,6 @@ namespace InstagramClone.Interfaces
 		public Task<string> SaveFile(IFormFile file, string path, string fileName, CancellationToken cancellationToken);
 		public Task<Result<MemoryStream>> GetFile(string filePath);
 		public void DeleteFile(string filePath);
+		public void DeleteFolder(string folderPath);
 	}
 }
