@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -109,6 +110,13 @@ builder.Services.AddSignalR();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddTransient<IEmailSender, EmailSender>();
 builder.Services.AddScoped<IPostsService, PostsService>();
+if (bool.Parse(builder.Configuration["UseS3Cloud"]!) == true)
+{
+	builder.Services.Configure<S3Config>(builder.Configuration.GetSection("S3"));
+	builder.Services.AddSingleton(provider => provider.GetRequiredService<IOptions<S3Config>>().Value);
+	builder.Services.AddSingleton<IFileService, S3FileService>();
+}
+else
 builder.Services.AddSingleton<IFileService, FileService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
