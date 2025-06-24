@@ -18,7 +18,6 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Configuration["FrontendOrigin"] = Helpers.GetHostFromURL(builder.Configuration["Frontend"] ?? throw new ArgumentNullException("FrontendOrigin", "Frontend origin has to be set in appsettings.json for CORS to be configured."));
 
 var signingKeys = builder.Configuration.GetRequiredSection("Authentication:Schemes:Bearer:SigningKeys").GetChildren().ToList().Select(sk => new SymmetricSecurityKey(Convert.FromBase64String(sk?["Value"])));
-//Console.WriteLine(JsonSerializer.Serialize(builder.Configuration.GetRequiredSection("Authentication:Schemes:Bearer:SigningKeys")));
 var jwtValidationParameters = new TokenValidationParameters
 {
 	ValidateIssuer = false,
@@ -34,27 +33,27 @@ builder.Services.AddControllers()
 	.AddJsonOptions(options => options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles);
 builder.Services.AddOpenApi();
 string connectionString = builder.Configuration.GetConnectionString("Main")!;
-builder.Services.AddDbContext<AppDbContext>(options => 
+builder.Services.AddDbContext<AppDbContext>(options =>
 	options.UseNpgsql(connectionString)
 	.UseLazyLoadingProxies()
 );
 builder.Services.AddAuthentication("Bearer")
-	.AddJwtBearer(options =>
-	{
-		options.MapInboundClaims = false;
-		options.TokenValidationParameters = jwtValidationParameters;
-		options.Events = new JwtBearerEvents
-		{
-			OnMessageReceived = context =>
+			.AddJwtBearer(options =>
 			{
-				var accessToken = context.Request.Query["access_token"];
-				var path = context.HttpContext.Request.Path;
-				if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/chat-hub"))
-					context.Token = accessToken;
-				return Task.CompletedTask;
-			}
-		};
-	});
+				options.MapInboundClaims = false;
+				options.TokenValidationParameters = jwtValidationParameters;
+				options.Events = new JwtBearerEvents
+				{
+					OnMessageReceived = context =>
+					{
+						var accessToken = context.Request.Query["access_token"];
+						var path = context.HttpContext.Request.Path;
+						if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/chat-hub"))
+							context.Token = accessToken;
+						return Task.CompletedTask;
+					}
+				};
+			});
 builder.Services.AddAuthorization(options =>
 {
 	options.AddPolicy("CanDeletePost", policyBuilder =>
@@ -72,7 +71,7 @@ builder.Services.AddAuthorization(options =>
 	options.AddPolicy("IsNotGuest", policyBuilder =>
 	{
 		policyBuilder.AddRequirements(new IsNotGuestRequirement());
-});
+	});
 });
 builder.Services.AddIdentityCore<User>(options =>
 {
@@ -118,7 +117,7 @@ if (bool.Parse(builder.Configuration["UseS3Cloud"]!) == true)
 	builder.Services.AddSingleton<IFileService, S3FileService>();
 }
 else
-builder.Services.AddSingleton<IFileService, FileService>();
+	builder.Services.AddSingleton<IFileService, FileService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<ILikeService, LikeService>();
