@@ -36,10 +36,10 @@ const PostPage = () =>
 				throw new Error(resultJSON.detail, { cause: resultJSON.errors });
 
 			// Required because JS UTC dates have to end with Z
-			resultJSON.comments =resultJSON.comments.map(c => {
-				const newComment = {...c, createdAt: c.createdAt + "Z"};
-				return newComment;
-			});
+			// resultJSON.comments =resultJSON.comments.map(c => {
+			// 	const newComment = {...c, createdAt: c.createdAt + "Z"};
+			// 	return newComment;
+			// });
 			setPostData(resultJSON);
 			await getMorePosts();
 		} catch (err)

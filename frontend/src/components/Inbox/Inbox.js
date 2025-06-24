@@ -91,7 +91,6 @@ const Inbox = () =>
 		connection.start().then(() => {
 			connection.on("UpdateRoom", chatRoom => {
 				var found = false;
-				chatRoom.lastUpdated = chatRoom.lastUpdated.slice(0, -1);
 				chatRoom.users = chatRoom.users.filter(u => u.username !== currentUser.username);
 				setRecentChats(prev => prev.map(c => {
 					if (c.id === chatRoom.id) {
@@ -168,7 +167,7 @@ const Inbox = () =>
 											<span className="username">{chat.users[0].username}</span>
 											<div className="message">
 												<div>{chat.lastMessage?.message}</div>
-												{chat.lastUpdated && <span>• {formatDate(formatDistanceToNowStrict(new Date(chat.lastUpdated+"Z")))}</span>}
+												{chat.lastUpdated && <span>• {formatDate(formatDistanceToNowStrict(new Date(chat.lastUpdated)))}</span>}
 											</div>
 										</div>
 									</li>

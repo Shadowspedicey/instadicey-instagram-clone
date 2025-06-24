@@ -25,7 +25,7 @@ const FollowButton = ({ target }) =>
 					}
 				});
 				if (result.status === 401)
-					return logOut();
+					return logOut(dispatch, history);
 				if (!result.ok)
 					return setIsFollowing(false);
 
