@@ -10,6 +10,7 @@ namespace InstagramClone.Utils
 		private static readonly IConfiguration config = new ConfigurationBuilder()
 			.AddJsonFile("appsettings.json")
 			.AddUserSecrets<Program>()
+			.AddEnvironmentVariables()
 			.Build();
 
 		public static string GetHostFromURL(string url)
