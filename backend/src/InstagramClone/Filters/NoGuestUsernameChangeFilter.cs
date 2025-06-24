@@ -7,12 +7,13 @@ namespace InstagramClone.Filters
 {
 	public class NoGuestUsernameChangeFilter : Attribute, IAsyncActionFilter
 	{
-		public Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
+		public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
 		{
 			var input = context.ActionArguments["userData"] as UserEditDTO;
 			if (context.HttpContext.User.FindFirstValue("username") == "guest" && input.Username != "guest")
 				context.Result = new ForbidResult();
-			return Task.CompletedTask;
+			else
+				await next();
 		}
 	}
 }

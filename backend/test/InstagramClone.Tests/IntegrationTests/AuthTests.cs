@@ -253,7 +253,7 @@ namespace InstagramClone.Tests.IntegrationTests
 			client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 			var changeUsernameResponse = await client.PostAsJsonAsync("user/edit", new { Username = "guest", RealName = "anything", Bio = "anything" });
 
-			Assert.Equal(HttpStatusCode.OK, changeUsernameResponse.StatusCode);
+			Assert.Equal(HttpStatusCode.NoContent, changeUsernameResponse.StatusCode);
 		}
 
 		[Fact]
