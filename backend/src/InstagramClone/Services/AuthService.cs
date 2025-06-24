@@ -39,8 +39,8 @@ namespace InstagramClone.Services
 				UserName = userData.Username,
 				RealName = userData.RealName,
 				IsVerified = false,
-				CreatedAt = DateTime.Now,
-				LastLogin = DateTime.Now,
+				CreatedAt = DateTime.UtcNow,
+				LastLogin = DateTime.UtcNow,
 				RecentSearches = [],
 				Following = [],
 				Followers = []

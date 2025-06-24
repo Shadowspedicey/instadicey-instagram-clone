@@ -34,7 +34,7 @@ namespace InstagramClone.Services
 					Caption = postDTO.Caption,
 					Photo = encryptedFilePath,
 					User = (await _dbContext.Users.FindAsync(userID))!,
-					CreatedAt = DateTime.Now,
+					CreatedAt = DateTime.UtcNow,
 				};
 				await _dbContext.Posts.AddAsync(newPost);
 				await _dbContext.SaveChangesAsync();

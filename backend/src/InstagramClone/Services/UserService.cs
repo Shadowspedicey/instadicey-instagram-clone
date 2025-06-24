@@ -122,8 +122,8 @@ namespace InstagramClone.Services
 			UserSearch? userSearchResult = currentUser.RecentSearches.FirstOrDefault(us => us.SearchedUser.UserName == searchedUsername);
 
 			if (userSearchResult is null)
-				currentUser.RecentSearches.Add(new UserSearch { User = currentUser, SearchedUser = searchedUser, SearchedAt = DateTime.Now });
-			else userSearchResult.SearchedAt = DateTime.Now;
+				currentUser.RecentSearches.Add(new UserSearch { User = currentUser, SearchedUser = searchedUser, SearchedAt = DateTime.UtcNow });
+			else userSearchResult.SearchedAt = DateTime.UtcNow;
 
 			await _dbContext.SaveChangesAsync();
 			return Result.Ok();
