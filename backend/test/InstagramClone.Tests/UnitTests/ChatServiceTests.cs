@@ -30,6 +30,7 @@ namespace InstagramClone.Tests.UnitTests
 			User user = new()
 			{
 				Email = "example@domain.com",
+				EmailConfirmed = true,
 				UserName = "exampleusername",
 				NormalizedUserName = "EXAMPLEUSERNAME",
 				IsVerified = false,
@@ -66,6 +67,7 @@ namespace InstagramClone.Tests.UnitTests
 			return new()
 			{
 				Email = $"anotherexample{id}@domain.com",
+				EmailConfirmed = true,
 				UserName = $"anotheruser{id}",
 				NormalizedUserName = $"ANOTHERUSER{id.ToUpper()}",
 				IsVerified = false,

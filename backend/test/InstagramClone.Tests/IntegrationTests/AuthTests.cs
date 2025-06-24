@@ -169,10 +169,9 @@ namespace InstagramClone.Tests.IntegrationTests
 				LastLogin = DateTime.UtcNow
 			};
 			await userManager.CreateAsync(newUser, "password");
-			var user = await userManager.FindByEmailAsync(newUser.Email);
-			var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
+			var token = await userManager.GenerateEmailConfirmationTokenAsync(newUser);
 
-			var encodedEmail = WebUtility.UrlEncode(user.Email);
+			var encodedEmail = WebUtility.UrlEncode(newUser.Email);
 			var encodedToken = WebUtility.UrlEncode(token);
 			var response = await client.PostAsync($"auth/confirm-email?encodedEmail={encodedEmail}&code={encodedToken}", null);
 
@@ -188,9 +187,9 @@ namespace InstagramClone.Tests.IntegrationTests
 			var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
 			var newUser = new User
 			{
-				Email = "example4@domain.com",
+				Email = "example5@domain.com",
 				EmailConfirmed = false,
-				UserName = "exampleusername4",
+				UserName = "exampleusername5",
 				RealName = "Example Name",
 				IsVerified = false,
 				Followers = [],

@@ -18,6 +18,8 @@ namespace InstagramClone.Data
 
 			modelBuilder.Entity<User>(U =>
 			{
+				U.HasQueryFilter(u => u.EmailConfirmed);
+
 				U.Property(u => u.UserName)
 					.HasMaxLength(20)
 					.IsRequired();

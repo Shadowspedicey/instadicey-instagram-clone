@@ -60,7 +60,7 @@ namespace InstagramClone.Services
 			string email = userLoginData.Email;
 			string password = userLoginData.Password;
 
-			User? user = await _userManager.FindByEmailAsync(email);
+			User? user = await _dbContext.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Email == email);
 			if (user == null)
 				return (IdentityResult.Failed(new IdentityError() { Code = "InvalidCredentials", Description = "Email or password are invalid." }), null);
 
@@ -96,7 +96,7 @@ namespace InstagramClone.Services
 
 		public async Task<IdentityResult> ConfirmEmail(string email, string token)
 		{
-			User? user = await _userManager.FindByEmailAsync(email);
+			User? user = await _dbContext.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Email == email);
 			if (user is null)
 				return IdentityResult.Failed(new IdentityError() { Code = "UserNotFound" });
 

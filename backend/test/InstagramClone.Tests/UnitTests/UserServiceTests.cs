@@ -27,6 +27,7 @@ namespace InstagramClone.Tests.UnitTests
 			User user = new()
 			{
 				Email = "example@domain.com",
+				EmailConfirmed = true,
 				UserName = "exampleusername",
 				NormalizedUserName = "EXAMPLEUSERNAME",
 				IsVerified = false,
@@ -71,6 +72,7 @@ namespace InstagramClone.Tests.UnitTests
 			User otherUser = new()
 			{
 				Email = "anotherexample@domain.com",
+				EmailConfirmed = true,
 				UserName = "anotheruser",
 				NormalizedUserName = "ANOTHERUSER",
 				IsVerified = false,
@@ -115,6 +117,7 @@ namespace InstagramClone.Tests.UnitTests
 			User anotherUser = new()
 			{
 				Email = "anotherexample@domain.com",
+				EmailConfirmed = true,
 				UserName = "anotheruser",
 				NormalizedUserName = "ANOTHERUSER",
 				IsVerified = false,
@@ -128,6 +131,7 @@ namespace InstagramClone.Tests.UnitTests
 			User friendlyUser = new()
 			{
 				Email = "friendlyuser@domain.com",
+				EmailConfirmed = true,
 				UserName = "frienuserdly",
 				NormalizedUserName = "FRIENUSERDLY",
 				IsVerified = false,
@@ -142,6 +146,7 @@ namespace InstagramClone.Tests.UnitTests
 			{
 				Email = "randomguy@domain.com",
 				UserName = "randomguy",
+				EmailConfirmed = true,
 				NormalizedUserName = "RANDOMGUY",
 				IsVerified = false,
 				LastLogin = DateTime.UtcNow,
@@ -222,6 +227,7 @@ namespace InstagramClone.Tests.UnitTests
 			User anotherUser = new()
 			{
 				Email = "anotherexample@domain.com",
+				EmailConfirmed = true,
 				UserName = "anotheruser",
 				NormalizedUserName = "ANOTHERUSER",
 				IsVerified = false,
@@ -235,6 +241,7 @@ namespace InstagramClone.Tests.UnitTests
 			User friendlyUser = new()
 			{
 				Email = "friendlyuser@domain.com",
+				EmailConfirmed = true,
 				UserName = "frienuserdly",
 				NormalizedUserName = "FRIENUSERDLY",
 				IsVerified = false,
@@ -248,6 +255,7 @@ namespace InstagramClone.Tests.UnitTests
 			User randomGuy = new()
 			{
 				Email = "randomguy@domain.com",
+				EmailConfirmed = true,
 				UserName = "randomguy",
 				NormalizedUserName = "RANDOMGUY",
 				IsVerified = false,
@@ -607,6 +615,7 @@ namespace InstagramClone.Tests.UnitTests
 			User otherUser2 = new()
 			{
 				Email = "anotherexample2@domain.com",
+				EmailConfirmed = true,
 				UserName = "anotheruser2",
 				NormalizedUserName = "ANOTHERUSER2",
 				IsVerified = false,
