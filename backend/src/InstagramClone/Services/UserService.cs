@@ -245,7 +245,7 @@ namespace InstagramClone.Services
 
 		public async Task<Result<IList<Post>>> GetSavedPosts(ClaimsPrincipal currentUserPrincipal)
 		{
-			List<string> savedPostsID = await _dbContext.Database.SqlQuery<string>($"SELECT * FROM PostsSaves WHERE UserID = {currentUserPrincipal.FindFirstValue("sub")} ORDER BY SavedAt DESC").ToListAsync();
+			List<string> savedPostsID = await _dbContext.Database.SqlQuery<string>($"SELECT * FROM \"PostsSaves\" WHERE \"UserID\" = {currentUserPrincipal.FindFirstValue("sub")} ORDER BY \"SavedAt\" DESC").ToListAsync();
 			IList<Post> savedPosts = await _dbContext.Posts.Where(p => savedPostsID.Contains(p.ID)).ToListAsync();
 			var postsDictionary = savedPosts.ToDictionary(p => p.ID);
 			IList<Post> savedPostsOrdered = savedPostsID.Select(id => postsDictionary[id]).ToList();

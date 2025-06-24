@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System.Net;
@@ -304,7 +305,7 @@ namespace InstagramClone.Tests.IntegrationTests
 			{
 				services.RemoveAll<DbContextOptions<AppDbContext>>();
 				services.Remove(services.SingleOrDefault(d => d.ServiceType == typeof(IDbContextOptionsConfiguration<AppDbContext>))!);
-				services.AddDbContext<AppDbContext>(options => options.UseSqlite(_connection));
+				services.AddDbContext<AppDbContext>(options => options.UseSqlite(_connection).ConfigureWarnings(x => x.Ignore(RelationalEventId.PendingModelChangesWarning)));
 			});
 		}
 

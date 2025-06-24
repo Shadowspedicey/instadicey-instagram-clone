@@ -13,7 +13,7 @@ This does not accurately represent the technical side of the database fully, but
 This ERD was made using [ERDPlus](https://erdplus.com/).
 
 # Features
-✅ SQL Server - Data storage
+✅ Postgres - Database
 
 ✅ JWT tokens - Generates and validates short-lasting JWTs to use for authentication
 

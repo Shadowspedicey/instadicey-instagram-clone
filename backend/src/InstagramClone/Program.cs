@@ -33,10 +33,11 @@ builder.Services.AddProblemDetails();
 builder.Services.AddControllers()
 	.AddJsonOptions(options => options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles);
 builder.Services.AddOpenApi();
+string connectionString = builder.Configuration.GetConnectionString("Main")!;
 builder.Services.AddDbContext<AppDbContext>(options => 
-	options
-		.UseSqlServer(builder.Configuration.GetConnectionString("Main"))
-		.UseLazyLoadingProxies());
+	options.UseNpgsql(connectionString)
+	.UseLazyLoadingProxies()
+);
 builder.Services.AddAuthentication("Bearer")
 	.AddJwtBearer(options =>
 	{

@@ -62,11 +62,13 @@ namespace InstagramClone.Services
 			}
 			catch (Exception ex)
 			{
-				if (ex is DbException && (ex.Message.Contains("no such table") || ex.Message.Contains("Invalid object name")))
+				if (ex is DbException && 
+					(ex.Message.Contains("no such table") ||
+					ex.Message.Contains("relation \"AspNetUsers\" does not exist")))
 				{
 					using IServiceScope scope = _serviceProvider.CreateScope();
 					AppDbContext dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-					await dbContext.Database.EnsureCreatedAsync();
+					await dbContext.Database.MigrateAsync();
 				}
 				return false;
 			}
