@@ -1,0 +1,19 @@
+services:
+  web:
+    build: ./frontend
+    depends_on:
+      - api
+    ports:
+      - 3000:3000
+    environment:
+      - REACT_APP_BACKEND_URL=http://localhost:5000
+    
+  api:
+    build: ./backend
+    ports:
+      - 5000:5000
+    env_file:
+      - api.env
+    environment:
+      - Frontend=http://localhost:3000
+    

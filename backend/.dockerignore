@@ -1,0 +1,6 @@
+src/InstagramClone/App_Data
+src/InstagramClone/bin
+src/InstagramClone/obj
+src/InstagramClone/publish
+src/InstagramClone/appsettings.Development.json
+src/InstagramClone/.gitignore
