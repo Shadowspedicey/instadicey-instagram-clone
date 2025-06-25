@@ -29,7 +29,7 @@
     "web-vitals": "^1.1.2"
   },
   "scripts": {
-    "start": "set \"NODE_OPTIONS=--openssl-legacy-provider\" && set \"REACT_APP_BACKEND_URL=https://localhost:7114\" && react-scripts start",
+    "start": "cross-env NODE_OPTIONS=--openssl-legacy-provider HOST=0.0.0.0 react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
@@ -53,5 +53,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3"
   }
 }
