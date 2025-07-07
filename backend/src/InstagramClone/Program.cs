@@ -108,7 +108,10 @@ builder.Services.AddSignalR();
 
 // Services
 builder.Services.AddScoped<AuthService>();
-builder.Services.AddTransient<IEmailSender, EmailSender>();
+if (builder.Configuration["UseEmailVerification"] == "true")
+	builder.Services.AddTransient<IEmailSender, EmailSender>();
+else
+	builder.Services.AddTransient<IEmailSender, ConsoleEmailSender>();
 builder.Services.AddScoped<IPostsService, PostsService>();
 if (bool.Parse(builder.Configuration["UseS3Cloud"]!) == true)
 {
