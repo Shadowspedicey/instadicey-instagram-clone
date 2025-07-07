@@ -1,19 +1,20 @@
-﻿using InstagramClone.Data.Entities;
-using InstagramClone.Interfaces;
-using SendGrid;
-using SendGrid.Helpers.Mail;
+﻿using InstagramClone.Interfaces;
+using MailKit.Net.Smtp;
+using MimeKit;
 using System.Net;
 
 namespace InstagramClone.Services
 {
-	public class EmailSender : IEmailSender
+	public class EmailSender : IEmailSender, IDisposable
 	{
-		private readonly SendGridClient _emailClient;
+		private readonly SmtpClient _emailClient;
 		private readonly string _frontend;
 		public EmailSender(IConfiguration configuration)
 		{
-			var apiKey = configuration["SendGrid:Key"];
-			_emailClient = new SendGridClient(apiKey);
+			var apiKey = configuration["SMTP:Key"];
+			_emailClient = new();
+			_emailClient.Connect("smtp.gmail.com", 587, false);
+			_emailClient.Authenticate("shadowspediceyapi@gmail.com", apiKey);
 			_frontend = configuration["Frontend"] ?? throw new ArgumentException("Frontend origin missing.");
 		}
 
@@ -23,12 +24,19 @@ namespace InstagramClone.Services
 			var encodedToken = WebUtility.UrlEncode(token);
 			string verificationLink = $"{_frontend}/#/accounts/verify?mode=verifyEmail&user={encodedEmail}&token={encodedToken}";
 
-			SendGridMessage message = new()
+			MimeMessage message = new()
 			{
-				From = new EmailAddress("shadowspediceyapi@gmail.com", "Instadicey"),
+				From = { new MailboxAddress("Instadicey", "shadowspedicey@gmail.com") },
+				To = { new MailboxAddress(email, email) },
 				Subject = "Instadicey email verification",
-				PlainTextContent = $"Hi,\n\nPlease verify your email by clicking the link below:\n{verificationLink}\n\nIf you did not create this request, ignore this email.\n\nBest,\nInstadicey",
-				HtmlContent =
+			};
+			var plainText = new TextPart("plain")
+			{
+				Text = $"Hi,\n\nPlease verify your email by clicking the link below:\n{verificationLink}\n\nIf you did not create this request, ignore this email.\n\nBest,\nInstadicey"
+			};
+			var htmlText = new TextPart("html")
+			{
+				Text =
 					$@"
 					<h2>Verify Your Email</h2>
 					<p>Hi,</p>
@@ -39,9 +47,14 @@ namespace InstagramClone.Services
 					<br>
 					<p>Best,<br>Instadicey</p>"
 			};
-			message.AddTo(new EmailAddress(email));
+			var body = new Multipart("alternative")
+			{
+				plainText,
+				htmlText
+			};
+			message.Body = body;
 
-			var response = await _emailClient.SendEmailAsync(message);
+			await _emailClient.SendAsync(message);
 		}
 
 		public async Task SendPasswordResetEmail(string email, string token)
@@ -51,12 +64,19 @@ namespace InstagramClone.Services
 
 			string verificationLink = $"{_frontend}/#/accounts/verify?mode=resetPassword&user={encodedEmail}&token={encodedToken}";
 
-			SendGridMessage message = new()
+			MimeMessage message = new()
 			{
-				From = new EmailAddress("shadowspediceyapi@gmail.com", "Instadicey"),
+				From = { new MailboxAddress("Instadicey", "shadowspediceyapi@gmail.com") },
+				To = { new MailboxAddress(email, email) },
 				Subject = "Instadicey password reset",
-				PlainTextContent = $"Hi,\n\nPlease reset your password by clicking the link below:\n{verificationLink}\n\nIf you did not create this request, ignore this email.\n\nBest,\nInstadicey",
-				HtmlContent =
+			};
+			var plainText = new TextPart("plain")
+			{
+				Text = $"Hi,\n\nPlease reset your password by clicking the link below:\n{verificationLink}\n\nIf you did not create this request, ignore this email.\n\nBest,\nInstadicey"
+			};
+			var htmlText = new TextPart("html")
+			{
+				Text =
 					$@"
 					<h2>Password Reset</h2>
 					<p>Hi,</p>
@@ -67,9 +87,21 @@ namespace InstagramClone.Services
 					<br>
 					<p>Best,<br>Instadicey</p>"
 			};
-			message.AddTo(new EmailAddress(email));
+			var body = new Multipart("alternative")
+			{
+				plainText,
+				htmlText
+			};
+			message.Body = body;
 
-			 await _emailClient.SendEmailAsync(message);
+			await _emailClient.SendAsync(message);
+		}
+
+		public void Dispose()
+		{
+			_emailClient.Disconnect(true);
+			_emailClient.Dispose();
+			GC.SuppressFinalize(this);
 		}
 	}
 }
