@@ -1,6 +1,6 @@
 {
   "name": "instagram-clone",
-  "homepage": "https://shadowspedicey.github.io/instagram-clone",
+  "homepage": "https://shadowspedicey.github.io/instadicey-instagram-clone",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -30,7 +30,7 @@
   },
   "scripts": {
     "start": "cross-env NODE_OPTIONS=--openssl-legacy-provider HOST=0.0.0.0 react-scripts start",
-    "build": "react-scripts build",
+    "build": "cross-env NODE_OPTIONS=--openssl-legacy-provider HOST=0.0.0.0 react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "predeploy": "npm run build",
