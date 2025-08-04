@@ -108,7 +108,7 @@ builder.Services.AddSignalR();
 
 // Services
 builder.Services.AddScoped<AuthService>();
-if (builder.Configuration["UseEmailVerification"] == "true")
+if (bool.Parse(builder.Configuration["UseEmailVerification"]))
 	builder.Services.AddTransient<IEmailSender, EmailSender>();
 else
 	builder.Services.AddTransient<IEmailSender, ConsoleEmailSender>();

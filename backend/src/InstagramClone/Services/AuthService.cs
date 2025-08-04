@@ -46,6 +46,11 @@ namespace InstagramClone.Services
 				Followers = []
 			};
 
+			if (await _userManager.Users.IgnoreQueryFilters().AnyAsync(u => u.UserName == userData.Username))
+				return IdentityResult.Failed(new IdentityError() { Code = "DuplicateUserName" });
+			if (await _userManager.Users.IgnoreQueryFilters().AnyAsync(u => u.Email == userData.Email))
+				return IdentityResult.Failed(new IdentityError() { Code = "DuplicateEmail" });
+
 			var result = await _userManager.CreateAsync(newUser, userData.Password);
 			if (!result.Succeeded)
 				return result;
