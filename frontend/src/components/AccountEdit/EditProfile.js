@@ -147,10 +147,10 @@ const EditProfile = () =>
 		try
 		{
 			let realName = nameRef.current.value;
-			let username = usernameRef.current.value;
+			let username = currentUser.username === "guest" ? "guest" : usernameRef.current.value;
 			let bio = bioRef.current.value;
 			
-			if (currentUser.username !== usernameRef.current.value) {
+			if (currentUser.username !== "guest" && currentUser.username !== usernameRef.current.value) {
 				if (username.length > 20) throw new Error("Username too long");
 				if (username.trim() === "") throw new Error("Username not entered");
 				if (!username.match(/^[A-Za-z0-9]*$/)) throw new Error("Username not English");
