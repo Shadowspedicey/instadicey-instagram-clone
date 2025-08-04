@@ -16,7 +16,11 @@ namespace InstagramClone.Utils
 		public static string GetHostFromURL(string url)
 		{
 			Uri uri = new Uri(url);
-			return $"{uri.Scheme}://{uri.Host}:{uri.Port}";
+			int port = uri.Port;
+			bool isDefaultPort = (uri.Scheme == "http" && port == 80) || (uri.Scheme == "https" && port == 443);
+			return isDefaultPort
+				? $"{uri.Scheme}://{uri.Host}"
+				: $"{uri.Scheme}://{uri.Host}:{uri.Port}";
 		}
 
 		public static class Files
