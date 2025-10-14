@@ -12,7 +12,7 @@ import VerifiedTick from "../VerifiedTick";
 import { backend } from "../../config";
 import { logOut } from "../../helpers";
 
-const PostWindow = ({post, isVertical, refreshPost}) =>
+const PostWindow = ({post, isVertical, refreshPost, older = false}) =>
 {
 	const history = useHistory();
 	const location = useLocation();
@@ -67,7 +67,7 @@ const PostWindow = ({post, isVertical, refreshPost}) =>
 				const resultJSON = await result.json();
 				throw new Error(resultJSON.detail, { cause: resultJSON.errors });
 			}
-			await refreshPost();
+			await refreshPost(post.id, older);
 			setCommentLoading(false);
 			addComment.current.value = "";
 		} catch (err)
