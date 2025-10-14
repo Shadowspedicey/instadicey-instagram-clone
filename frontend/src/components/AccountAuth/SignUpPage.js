@@ -121,6 +121,8 @@ const SignUpPage = () =>
 					errorMessages.push("Username already in use.");
 				else if (errors[i].code === "DuplicateEmail")
 					errorMessages.push("Email already in use.");
+				else
+					errorMessages.push(errors[i].description);
 			errors.length === 0
 				? setErrorMsg("An error has occurred.")
 				: setErrorMsg(errorMessages.join("\n"));
@@ -146,7 +148,7 @@ const SignUpPage = () =>
 						<input type="text" placeholder="Full Name" id="name" ref={realNameRef}></input>
 						<input type="text" placeholder="Username" id="username" ref={usernameRef} onChange={checkForm}></input>
 						<input type="password" placeholder="Password" id="password" ref={passwordRef} onChange={checkForm}></input>
-						<button id="signup" className={`${isInfoValid ? null : "disabled"}`}>Sign Up</button>
+						<button id="signup" className={`${isInfoValid ? null : "disabled"}`} type="submit">Sign Up</button>
 					</form>
 				</div>
 				<div className="extra outlined"><span>Have an account? <Link to="/" className="button">Log In</Link></span></div>
