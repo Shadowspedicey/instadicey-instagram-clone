@@ -15,6 +15,12 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(s =>
+{
+	s.EnableAnnotations();
+});
+
 builder.Configuration["FrontendOrigin"] = Helpers.GetHostFromURL(builder.Configuration["Frontend"] ?? throw new ArgumentNullException("FrontendOrigin", "Frontend origin has to be set in appsettings.json for CORS to be configured."));
 
 var signingKeys = builder.Configuration.GetRequiredSection("Authentication:Schemes:Bearer:SigningKeys").GetChildren().ToList().Select(sk => new SymmetricSecurityKey(Convert.FromBase64String(sk?["Value"])));
@@ -139,7 +145,10 @@ builder.Services.AddSingleton<IAuthorizationHandler, IsNotGuestHandler>();
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
-	app.MapOpenApi();
+{
+	app.UseSwagger();
+	app.UseSwaggerUI();
+}
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();

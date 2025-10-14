@@ -52,5 +52,10 @@ namespace InstagramClone.Utils
 
 		public static bool HasCodedErrorWithCode<T>(this Result<T> result, ErrorCode errorCode) => result.HasError((CodedError e) => e?.Metadata?["code"] == Enum.GetName(errorCode));
 		public static bool HasCodedErrorWithCode(this Result result, ErrorCode errorCode) => result.HasError((CodedError e) => e?.Metadata?["code"] == Enum.GetName(errorCode));
+
+		public class ProblemDetailsWithErrors : ProblemDetails
+		{
+			public string[] Errors { get; set; }
+		}
 	}
 }
